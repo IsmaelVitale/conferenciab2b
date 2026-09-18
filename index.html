@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Validação de Doca</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tone.js para feedback sonoro -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        /* Desabilitando seleção de texto para evitar cliques acidentais no coletor */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* Estilo customizado para piscar a tela */
+        .flash-green { animation: flashG 0.5s ease-out; }
+        .flash-red { animation: flashR 0.5s ease-out; }
+        
+        @keyframes flashG {
+            0% { background-color: #22c55e; }
+            100% { background-color: #f3f4f6; }
+        }
+        @keyframes flashR {
+            0% { background-color: #ef4444; }
+            100% { background-color: #f3f4f6; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans h-screen flex flex-col overflow-hidden">
+
+    <div id="screen-setup" class="flex flex-col h-full p-4 max-w-md mx-auto w-full">
+        <header class="mb-8 mt-4 text-center">
+            <h1 class="text-3xl font-bold text-blue-900">Conferência de Doca</h1>
+            <p class="text-gray-500 mt-2">Selecione ou digite a loja de destino</p>
+        </header>
+
+        <div class="bg-white p-6 rounded-xl shadow-md flex-1">
+            <label for="store-input" class="block text-sm font-medium text-gray-700 mb-2">Loja Alvo</label>
+            <!-- Input com Datalist permite escolher da lista ou digitar livremente -->
+            <input list="store-list" id="store-input" type="text" inputmode="numeric" 
+                   class="w-full text-3xl p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-center" 
+                   placeholder="Ex: 7016">
+            <p id="setup-error-msg" class="text-red-500 font-medium text-center mt-3 hidden">Por favor, digite ou selecione uma loja.</p>
+            <datalist id="store-list">
+                <!-- Populado via JS -->
+            </datalist>
+
+            <div class="mt-8">
+                <h3 class="text-sm font-medium text-gray-500 mb-3">Lojas Recentes</h3>
+                <div id="recent-stores" class="flex flex-wrap gap-2">
+                    <!-- Botões injetados via JS -->
+                </div>
+            </div>
+        </div>
+
+        <button id="btn-start" class="mt-6 w-full bg-blue-600 text-white font-bold text-xl py-5 rounded-xl shadow-lg active:bg-blue-800 transition-colors">
+            Iniciar Conferência
+        </button>
+    </div>
+
+    <div id="screen-conference" class="hidden flex flex-col h-full w-full">
+        <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center z-10">
+            <div>
+                <span class="text-sm opacity-80 block">Validando para loja:</span>
+                <span id="display-target-store" class="text-3xl font-bold tracking-wider">---</span>
+            </div>
+            
+            <!-- Botão com touch-none para evitar scroll no celular ao segurar e classes para posicionamento -->
+            <button id="btn-end" class="relative bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow overflow-hidden flex items-center gap-2 select-none touch-none">
+                <span>Encerrar</span>
+                
+                <!-- Ícone animado (Spinner) que aparece ao segurar -->
+                <svg id="btn-end-spinner" class="animate-spin h-5 w-5 text-white hidden z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+
+                <!-- Barra de progresso visual -->
+                <div id="btn-end-progress" class="absolute bottom-0 left-0 h-1.5 bg-red-800 w-0 transition-all duration-75 ease-linear"></div>
+            </button>
+        </header>
+
+        <!-- Área Central de Feedback -->
+        <main id="feedback-area" class="flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-200 bg-gray-100 relative">
+            
+            <div id="status-icon" class="text-9xl mb-4 text-gray-300">
+                <!-- Ícone placeholder neutro -->
+                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+            </div>
+            <h2 id="status-text" class="text-3xl font-bold text-gray-400 text-center uppercase tracking-widest mb-2">Aguardando Leitura</h2>
+            
+            <!-- Caixa que mostra qual loja errada foi lida -->
+            <div id="error-details" class="hidden flex-col items-center mt-4">
+                <span class="text-white text-lg font-bold bg-black bg-opacity-50 px-4 py-1 rounded-full mb-1">Loja lida na caixa:</span>
+                <span id="wrong-store-read" class="text-6xl font-black text-white drop-shadow-md">---</span>
+            </div>
+
+            <!-- Campo de input para o bipador (sempre visível mas discreto) -->
+            <div class="absolute bottom-10 w-3/4 max-w-sm opacity-50">
+                <input id="barcode-input" type="text" autocomplete="off"
+                       class="w-full text-center text-xl p-3 bg-white border-2 border-gray-300 rounded-lg shadow-inner focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:opacity-100 transition-opacity"
+                       placeholder="Bipe a caixa aqui...">
+            </div>
+        </main>
+    </div>
+
+    <div id="screen-summary" class="hidden flex flex-col h-full p-4 max-w-md mx-auto w-full justify-center">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Resumo da Conferência</h2>
+        
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="col-span-2 bg-blue-100 p-6 rounded-xl text-center shadow">
+                <span class="block text-gray-600 font-semibold mb-1">Total de Caixas</span>
+                <span id="summary-total" class="text-5xl font-black text-blue-800">0</span>
+            </div>
+            <div class="bg-green-100 p-4 rounded-xl text-center shadow border-2 border-green-200">
+                <span class="block text-green-700 font-semibold mb-1">Corretas</span>
+                <span id="summary-correct" class="text-4xl font-black text-green-600">0</span>
+            </div>
+            <div class="bg-red-100 p-4 rounded-xl text-center shadow border-2 border-red-200">
+                <span class="block text-red-700 font-semibold mb-1">Erradas</span>
+                <span id="summary-wrong" class="text-4xl font-black text-red-600">0</span>
+            </div>
+        </div>
+
+        <button id="btn-export" class="w-full bg-green-600 hover:bg-green-700 transition-colors text-white font-bold text-lg py-4 rounded-xl shadow mb-4 flex items-center justify-center gap-2">
+            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+            Exportar Relatório CSV
+        </button>
+        
+        <button id="btn-new" class="w-full bg-gray-300 hover:bg-gray-400 transition-colors text-gray-800 font-bold text-lg py-4 rounded-xl shadow">
+            Nova Conferência
+        </button>
+    </div>
+
+    <script>
+        // Lista Base de Lojas
+        const lojasBase = [
+            "7016", "7021", "7025", "7026", "7027", "7030", "7037", "7040", 
+            "7042", "7044", "7049", "7050", "7052", "7056", "7060", "7061", 
+            "7071", "7076", "7077", "7100", "10347", "11458", "12641", 
+            "16279", "16787", "17261", "7019", "7104", "17262", "17247", "17523"
+        ];
+
+        // Estado Global do Sistema
+        let lojaAlvo = "";
+        let historicoLeituras = []; 
+        let contagemTotal = 0;
+        let contagemCorreta = 0;
+        let contagemErrada = 0;
+        
+        // Synths do Tone.js para áudio
+        let synthSuccess;
+        let synthError;
+
+        // Referências DOM
+        const screenSetup = document.getElementById('screen-setup');
+        const screenConference = document.getElementById('screen-conference');
+        const screenSummary = document.getElementById('screen-summary');
+        
+        const storeInput = document.getElementById('store-input');
+        const datalist = document.getElementById('store-list');
+        const recentStoresContainer = document.getElementById('recent-stores');
+        
+        const btnStart = document.getElementById('btn-start');
+        const btnEnd = document.getElementById('btn-end');
+        const btnExport = document.getElementById('btn-export');
+        const btnNew = document.getElementById('btn-new');
+        
+        const displayTargetStore = document.getElementById('display-target-store');
+        const barcodeInput = document.getElementById('barcode-input');
+        const feedbackArea = document.getElementById('feedback-area');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+        const errorDetails = document.getElementById('error-details');
+        const wrongStoreRead = document.getElementById('wrong-store-read');
+        const setupErrorMsg = document.getElementById('setup-error-msg');
+
+        function initApp() {
+            // Popula o Datalist
+            lojasBase.forEach(loja => {
+                const option = document.createElement('option');
+                option.value = loja;
+                datalist.appendChild(option);
+            });
+            renderRecentStores();
+        }
+
+        function getRecentStores() {
+            const stores = localStorage.getItem('recentStores');
+            return stores ? JSON.parse(stores) : [];
+        }
+
+        function saveRecentStore(store) {
+            let stores = getRecentStores();
+            // Remove se já existe para colocar no começo
+            stores = stores.filter(s => s !== store);
+            stores.unshift(store);
+            if(stores.length > 5) stores.pop(); // Mantém apenas as 5 mais recentes
+            localStorage.setItem('recentStores', JSON.stringify(stores));
+        }
+
+        function renderRecentStores() {
+            const stores = getRecentStores();
+            recentStoresContainer.innerHTML = '';
+            if (stores.length === 0) {
+                recentStoresContainer.innerHTML = '<span class="text-sm text-gray-400">Nenhuma loja recente.</span>';
+                return;
+            }
+            stores.forEach(store => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-gray-200 hover:bg-blue-100 text-gray-800 font-medium py-2 px-4 rounded-full text-sm border border-gray-300 transition-colors shadow-sm';
+                btn.innerText = store;
+                btn.onclick = () => { 
+                    storeInput.value = store; 
+                    setupErrorMsg.classList.add('hidden');
+                };
+                recentStoresContainer.appendChild(btn);
+            });
+        }
+
+        async function setupAudio() {
+            if(!synthSuccess) {
+                await Tone.start();
+                // Som de Sucesso: Bip duplo agudo e amigável
+                synthSuccess = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 }
+                }).toDestination();
+                
+                // Som de Erro: Buzzer grave e agressivo
+                synthError = new Tone.Synth({
+                    oscillator: { type: "sawtooth" },
+                    envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.4 }
+                }).toDestination();
+            }
+        }
+
+        function playSuccessAudio() {
+            if(synthSuccess) synthSuccess.triggerAttackRelease(["C6", "E6"], "0.15s");
+        }
+
+        function playErrorAudio() {
+            if(synthError) synthError.triggerAttackRelease("C2", "0.5s");
+        }
+
+        // Permitir apertar "Enter" para iniciar
+        storeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                btnStart.click();
+            }
+        });
+
+        btnStart.onclick = async () => {
+            const val = storeInput.value.trim();
+            if(!val) {
+                setupErrorMsg.classList.remove('hidden');
+                return;
+            }
+            setupErrorMsg.classList.add('hidden');
+            
+            lojaAlvo = val;
+            saveRecentStore(lojaAlvo);
+            
+            // Inicia áudio do usuário (requisito de segurança dos navegadores modernos)
+            await setupAudio();
+            
+            // Reset estado
+            historicoLeituras = [];
+            contagemTotal = 0;
+            contagemCorreta = 0;
+            contagemErrada = 0;
+            resetFeedbackUI();
+            
+            displayTargetStore.innerText = lojaAlvo;
+            
+            screenSetup.classList.add('hidden');
+            screenConference.classList.remove('hidden');
+            
+            // Foca no input e força ele a não perder o foco
+            setTimeout(() => {
+                barcodeInput.focus();
+            }, 100);
+        };
+
+        let pressTimer;
+        let progressInterval;
+        const holdDuration = 1500; // Tempo necessário segurando: 1.5 segundos
+
+        const startPress = (e) => {
+            const spinner = document.getElementById('btn-end-spinner');
+            const progress = document.getElementById('btn-end-progress');
+            spinner.classList.remove('hidden');
+            
+            let startTime = Date.now();
+            progress.style.width = '0%';
+            
+            // Animação da barra de progresso do botão
+            progressInterval = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                let percent = Math.min((elapsed / holdDuration) * 100, 100);
+                progress.style.width = percent + '%';
+            }, 50);
+
+            // Confirmação final após o tempo esgotar
+            pressTimer = setTimeout(() => {
+                clearInterval(progressInterval);
+                finishConference();
+            }, holdDuration);
+        };
+
+        const cancelPress = () => {
+            clearTimeout(pressTimer);
+            clearInterval(progressInterval);
+            
+            const spinner = document.getElementById('btn-end-spinner');
+            const progress = document.getElementById('btn-end-progress');
+            
+            if(spinner) spinner.classList.add('hidden');
+            if(progress) progress.style.width = '0%';
+            
+            // Se o cara desistiu de clicar em encerrar, volta o foco pro leitor
+            if (!screenConference.classList.contains('hidden')) {
+                barcodeInput.focus();
+            }
+        };
+
+        // Eventos para abranger toques na tela do celular, PDA e mouse
+        btnEnd.addEventListener('mousedown', startPress);
+        btnEnd.addEventListener('touchstart', startPress);
+        
+        btnEnd.addEventListener('mouseup', cancelPress);
+        btnEnd.addEventListener('mouseleave', cancelPress);
+        btnEnd.addEventListener('touchend', cancelPress);
+
+        function finishConference() {
+            // Interrompe qualquer animação de botão que tenha sobrado
+            cancelPress();
+            
+            document.getElementById('summary-total').innerText = contagemTotal;
+            document.getElementById('summary-correct').innerText = contagemCorreta;
+            document.getElementById('summary-wrong').innerText = contagemErrada;
+            
+            screenConference.classList.add('hidden');
+            screenSummary.classList.remove('hidden');
+        }
+
+        btnNew.onclick = () => {
+            storeInput.value = '';
+            renderRecentStores();
+            screenSummary.classList.add('hidden');
+            screenSetup.classList.remove('hidden');
+        };
+
+        // Mantém o input sempre focado se o usuário clicar fora dele durante a conferência
+        document.addEventListener('click', (e) => {
+            if (!screenConference.classList.contains('hidden') && e.target !== btnEnd && !btnEnd.contains(e.target)) {
+                barcodeInput.focus();
+            }
+        });
+
+        // Previne perder o foco do campo na conferência quando tenta trocar de aba/aplicativo e voltar
+        barcodeInput.addEventListener('blur', () => {
+            if (!screenConference.classList.contains('hidden')) {
+                setTimeout(() => barcodeInput.focus(), 10);
+            }
+        });
+
+        barcodeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                processarLeitura(barcodeInput.value);
+                barcodeInput.value = ''; // Limpa para o próximo bip do leitor
+            }
+        });
+
+        /**
+         * FUNÇÃO CRÍTICA: Extrai apenas o NÚMERO DA LOJA de dentro do código lido.
+         */
+        function extrairLojaDoCodigo(codigoCompleto) {
+            codigoCompleto = codigoCompleto.trim();
+            
+            // 1. Checa se o código contém a própria loja alvo (Prioridade máxima)
+            if (codigoCompleto.includes(lojaAlvo)) {
+                return lojaAlvo;
+            }
+            
+            // 2. Se não era a loja alvo, procura qual outra loja cadastrada está DENTRO do código
+            for (let i = 0; i < lojasBase.length; i++) {
+                if (codigoCompleto.includes(lojasBase[i])) {
+                    return lojasBase[i]; // Retorna SOMENTE o número da loja achada (ex: "7021")
+                }
+            }
+            
+            // 3. Se não achou na nossa lista base, tenta extrair qualquer bloco de 4 ou 5 dígitos seguidos
+            const match = codigoCompleto.match(/\d{4,5}/);
+            if (match) {
+                return match[0];
+            }
+
+            // 4. Se não conseguiu identificar nada que pareça uma loja, devolve "Inválida"
+            return "Inválida";
+        }
+
+        function processarLeitura(codigoLido) {
+            if (!codigoLido) return;
+            
+            contagemTotal++;
+            const lojaLida = extrairLojaDoCodigo(codigoLido);
+            
+            // Lógica de verificação
+            const isCorreto = lojaLida === lojaAlvo;
+            
+            const timestamp = new Date().toLocaleString('pt-BR');
+            historicoLeituras.push({
+                dataHora: timestamp,
+                caixaLida: codigoLido,
+                lojaAlvo: lojaAlvo,
+                lojaIdentificada: lojaLida,
+                status: isCorreto ? 'CORRETO' : 'ERRO'
+            });
+
+            if (isCorreto) {
+                contagemCorreta++;
+                exibirSucesso();
+            } else {
+                contagemErrada++;
+                exibirErro(lojaLida);
+            }
+        }
+
+        function exibirSucesso() {
+            playSuccessAudio();
+            
+            feedbackArea.className = "flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-75 bg-green-500 relative";
+            statusText.innerText = "CAIXA CORRETA";
+            statusText.className = "text-5xl font-black text-white text-center uppercase tracking-widest mb-2";
+            statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm108.25 138.29l-136 136a16 16 0 01-22.62 0l-58.34-58.34a16 16 0 0122.62-22.62l47 47 124.69-124.69a16 16 0 0122.65 22.65z"></path></svg>`;
+            errorDetails.classList.add('hidden');
+            
+            // Efeito Flash
+            feedbackArea.classList.remove('flash-green', 'flash-red');
+            void feedbackArea.offsetWidth; // Trigger reflow para reiniciar animação
+            feedbackArea.classList.add('flash-green');
+
+            // Voltar ao neutro após 1.2 segundos
+            clearTimeout(window.feedbackTimeout);
+            window.feedbackTimeout = setTimeout(resetFeedbackUI, 1200);
+        }
+
+        function exibirErro(lojaErrada) {
+            playErrorAudio();
+            
+            feedbackArea.className = "flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-75 bg-red-600 relative";
+            statusText.innerText = "ERRO DE ROTA!";
+            statusText.className = "text-5xl font-black text-white text-center uppercase tracking-widest mb-2";
+            statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm86.63 272a16 16 0 11-22.63 22.63L256 278.63l-64 64a16 16 0 01-22.63-22.63l64-64-64-64a16 16 0 0122.63-22.63l64 64 64-64a16 16 0 0122.63 22.63l-64 64z"></path></svg>`;
+            
+            // Mostra apenas o NÚMERO extraído e não mais o código inteiro
+            wrongStoreRead.innerText = lojaErrada;
+            errorDetails.classList.remove('hidden');
+            errorDetails.classList.add('flex');
+
+            // Efeito Flash
+            feedbackArea.classList.remove('flash-green', 'flash-red');
+            void feedbackArea.offsetWidth; // Trigger reflow
+            feedbackArea.classList.add('flash-red');
+
+            // Quando dá erro, demora mais para sumir (3.5 segundos) para o operador ver bem
+            clearTimeout(window.feedbackTimeout);
+            window.feedbackTimeout = setTimeout(resetFeedbackUI, 3500);
+        }
+
+        function resetFeedbackUI() {
+            feedbackArea.className = "flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-500 bg-gray-100 relative";
+            statusText.innerText = "Aguardando Leitura";
+            statusText.className = "text-3xl font-bold text-gray-400 text-center uppercase tracking-widest mb-2";
+            statusIcon.innerHTML = `<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>`;
+            errorDetails.classList.add('hidden');
+            errorDetails.classList.remove('flex');
+        }
+
+        btnExport.onclick = () => {
+            if (historicoLeituras.length === 0) {
+                return;
+            }
+
+            // Headers do CSV
+            let csvContent = "Data/Hora,Caixa Bipada,Loja Alvo,Loja Lida (Extraida),Status\n";
+            
+            // Linhas
+            historicoLeituras.forEach(row => {
+                // Limpa quebras de linha ou aspas que possam quebrar o CSV
+                let caixa = row.caixaLida.replace(/"/g, '""');
+                csvContent += `"${row.dataHora}","${caixa}","${row.lojaAlvo}","${row.lojaIdentificada}","${row.status}"\n`;
+            });
+
+            // Criação do Blob e Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            const fileName = `Relatorio_Conferencia_${lojaAlvo}_${new Date().getTime()}.csv`;
+            link.setAttribute("download", fileName);
+            
+            document.body.appendChild(link); // Requerido para Firefox
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // Bootstrap da aplicação (inicializa listas e cache)
+        initApp();
+    </script>
+</body>
+</html>
