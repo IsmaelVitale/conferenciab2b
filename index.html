@@ -32,116 +32,116 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans h-screen flex flex-col overflow-hidden">
+<body class="bg-gray-100 text-gray-800 font-sans h-[100dvh] w-full flex flex-col overflow-x-hidden overflow-y-auto">
 
-    <div id="screen-setup" class="flex flex-col h-full p-4 max-w-md mx-auto w-full">
-        <header class="mb-8 mt-4 text-center">
-            <h1 class="text-3xl font-bold text-blue-900">Conferência de Doca</h1>
-            <p class="text-gray-500 mt-2">Selecione ou digite a loja de destino</p>
+    <div id="screen-setup" class="flex flex-col flex-1 p-4 max-w-md mx-auto w-full">
+        <header class="mb-6 mt-2 text-center">
+            <h1 class="text-2xl sm:text-3xl font-bold text-blue-900">Conferência de Doca</h1>
+            <p class="text-gray-500 mt-2 text-sm sm:text-base">Selecione ou digite a loja de destino</p>
         </header>
 
-        <div class="bg-white p-6 rounded-xl shadow-md flex-1">
-            <label for="store-input" class="block text-sm font-medium text-gray-700 mb-2">Loja Alvo</label>
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md flex-1 overflow-y-auto">
+            <label for="store-input" class="block text-sm font-medium text-gray-700 mb-2 whitespace-normal">Loja Alvo</label>
             <!-- Input com Datalist permite escolher da lista ou digitar livremente -->
             <input list="store-list" id="store-input" type="text" inputmode="numeric" 
-                   class="w-full text-3xl p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-center" 
+                   class="w-full text-2xl sm:text-3xl p-3 sm:p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-center" 
                    placeholder="Ex: 7016">
-            <p id="setup-error-msg" class="text-red-500 font-medium text-center mt-3 hidden">Por favor, digite ou selecione uma loja.</p>
+            <p id="setup-error-msg" class="text-red-500 font-medium text-center mt-3 text-sm hidden">Por favor, digite ou selecione uma loja.</p>
             <datalist id="store-list">
                 <!-- Populado via JS -->
             </datalist>
 
-            <div class="mt-8">
-                <h3 class="text-sm font-medium text-gray-500 mb-3">Lojas Recentes</h3>
+            <div class="mt-6">
+                <h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-3">Lojas Recentes</h3>
                 <div id="recent-stores" class="flex flex-wrap gap-2">
                     <!-- Botões injetados via JS -->
                 </div>
             </div>
         </div>
 
-        <button id="btn-start" class="mt-6 w-full bg-blue-600 text-white font-bold text-xl py-5 rounded-xl shadow-lg active:bg-blue-800 transition-colors">
+        <!-- Botão com quebra de linha permitida (whitespace-normal) para telas estreitas -->
+        <button id="btn-start" class="mt-4 sm:mt-6 w-full bg-blue-600 text-white font-bold text-lg sm:text-xl py-4 sm:py-5 px-2 rounded-xl shadow-lg active:bg-blue-800 transition-colors whitespace-normal break-words text-center min-h-[3.5rem]">
             Iniciar Conferência
         </button>
     </div>
 
     <div id="screen-conference" class="hidden flex flex-col h-full w-full">
-        <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between items-center z-10">
-            <div>
-                <span class="text-sm opacity-80 block">Validando para loja:</span>
-                <span id="display-target-store" class="text-3xl font-bold tracking-wider">---</span>
+        <!-- Header ajustado com flex-wrap para jogar o botão pra baixo se não couber na mesma linha -->
+        <header class="bg-blue-900 text-white p-3 sm:p-4 shadow-md flex flex-wrap justify-between items-center z-10 gap-2">
+            <div class="flex-1 min-w-[50%]">
+                <span class="text-xs sm:text-sm opacity-80 block whitespace-normal break-words">Validando para loja:</span>
+                <span id="display-target-store" class="text-2xl sm:text-3xl font-bold tracking-wider break-words">---</span>
             </div>
             
-            <!-- Botão com touch-none para evitar scroll no celular ao segurar e classes para posicionamento -->
-            <button id="btn-end" class="relative bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow overflow-hidden flex items-center gap-2 select-none touch-none">
+            <button id="btn-end" class="relative bg-red-500 hover:bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-bold shadow overflow-hidden flex items-center gap-2 select-none touch-none flex-shrink-0 text-sm sm:text-base">
                 <span>Encerrar</span>
                 
-                <!-- Ícone animado (Spinner) que aparece ao segurar -->
-                <svg id="btn-end-spinner" class="animate-spin h-5 w-5 text-white hidden z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg id="btn-end-spinner" class="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-white hidden z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
 
-                <!-- Barra de progresso visual -->
                 <div id="btn-end-progress" class="absolute bottom-0 left-0 h-1.5 bg-red-800 w-0 transition-all duration-75 ease-linear"></div>
             </button>
         </header>
 
-        <!-- Área Central de Feedback -->
-        <main id="feedback-area" class="flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-200 bg-gray-100 relative">
+        <!-- Área Central de Feedback. Usando justify-between para empurrar o leitor pro final naturalmente -->
+        <main id="feedback-area" class="flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-200 bg-gray-100 w-full overflow-hidden">
             
-            <div id="status-icon" class="text-9xl mb-4 text-gray-300">
-                <!-- Ícone placeholder neutro -->
-                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
-            </div>
-            <h2 id="status-text" class="text-3xl font-bold text-gray-400 text-center uppercase tracking-widest mb-2">Aguardando Leitura</h2>
-            
-            <!-- Caixa que mostra qual loja errada foi lida -->
-            <div id="error-details" class="hidden flex-col items-center mt-4">
-                <span class="text-white text-lg font-bold bg-black bg-opacity-50 px-4 py-1 rounded-full mb-1">Loja lida na caixa:</span>
-                <span id="wrong-store-read" class="text-6xl font-black text-white drop-shadow-md">---</span>
+            <!-- Espaçador invisível para centralizar o conteúdo do meio -->
+            <div class="flex-1 flex flex-col items-center justify-end pb-4 w-full text-center">
+                <div id="status-icon" class="text-8xl sm:text-9xl mb-4 text-gray-300">
+                    <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                <h2 id="status-text" class="text-2xl sm:text-3xl font-bold text-gray-400 uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2">Aguardando Leitura</h2>
+                
+                <div id="error-details" class="hidden flex-col items-center mt-2 sm:mt-4 w-full">
+                    <span class="text-white text-base sm:text-lg font-bold bg-black bg-opacity-50 px-3 sm:px-4 py-1 rounded-full mb-1 whitespace-normal break-words text-center max-w-full">Loja lida na caixa:</span>
+                    <span id="wrong-store-read" class="text-5xl sm:text-6xl font-black text-white drop-shadow-md break-all text-center">---</span>
+                </div>
             </div>
 
-            <!-- Campo de input para o bipador (sempre visível mas discreto) -->
-            <div class="absolute bottom-10 w-3/4 max-w-sm opacity-50">
+            <!-- Campo de input (flui com flex layout evitando sobrepor teclado) -->
+            <div class="w-full sm:w-3/4 max-w-sm opacity-50 pb-2 sm:pb-6 flex-shrink-0 mt-auto">
                 <input id="barcode-input" type="text" autocomplete="off"
-                       class="w-full text-center text-xl p-3 bg-white border-2 border-gray-300 rounded-lg shadow-inner focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:opacity-100 transition-opacity"
+                       class="w-full text-center text-lg sm:text-xl p-3 bg-white border-2 border-gray-300 rounded-lg shadow-inner focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:opacity-100 transition-opacity"
                        placeholder="Bipe a caixa aqui...">
             </div>
         </main>
     </div>
 
-    <div id="screen-summary" class="hidden flex flex-col h-full p-4 max-w-md mx-auto w-full justify-center">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Resumo da Conferência</h2>
+    <div id="screen-summary" class="hidden flex flex-col flex-1 p-4 max-w-md mx-auto w-full justify-center overflow-y-auto">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6 whitespace-normal break-words">Resumo da Conferência</h2>
         
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="col-span-2 bg-blue-100 p-6 rounded-xl text-center shadow">
-                <span class="block text-gray-600 font-semibold mb-1">Total de Caixas</span>
-                <span id="summary-total" class="text-5xl font-black text-blue-800">0</span>
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+            <div class="col-span-2 bg-blue-100 p-4 sm:p-6 rounded-xl text-center shadow">
+                <span class="block text-gray-600 text-sm sm:text-base font-semibold mb-1 whitespace-normal break-words">Total de Caixas</span>
+                <span id="summary-total" class="text-4xl sm:text-5xl font-black text-blue-800 break-words">0</span>
             </div>
-            <div class="bg-green-100 p-4 rounded-xl text-center shadow border-2 border-green-200">
-                <span class="block text-green-700 font-semibold mb-1">Corretas</span>
-                <span id="summary-correct" class="text-4xl font-black text-green-600">0</span>
+            <div class="bg-green-100 p-3 sm:p-4 rounded-xl text-center shadow border-2 border-green-200">
+                <span class="block text-green-700 text-sm sm:text-base font-semibold mb-1 whitespace-normal break-words">Corretas</span>
+                <span id="summary-correct" class="text-3xl sm:text-4xl font-black text-green-600 break-words">0</span>
             </div>
-            <div class="bg-red-100 p-4 rounded-xl text-center shadow border-2 border-red-200">
-                <span class="block text-red-700 font-semibold mb-1">Erradas</span>
-                <span id="summary-wrong" class="text-4xl font-black text-red-600">0</span>
+            <div class="bg-red-100 p-3 sm:p-4 rounded-xl text-center shadow border-2 border-red-200">
+                <span class="block text-red-700 text-sm sm:text-base font-semibold mb-1 whitespace-normal break-words">Erradas</span>
+                <span id="summary-wrong" class="text-3xl sm:text-4xl font-black text-red-600 break-words">0</span>
             </div>
         </div>
 
-        <button id="btn-export" class="w-full bg-green-600 hover:bg-green-700 transition-colors text-white font-bold text-lg py-4 rounded-xl shadow mb-4 flex items-center justify-center gap-2">
-            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
-            Exportar Relatório CSV
+        <button id="btn-export" class="w-full bg-green-600 hover:bg-green-700 transition-colors text-white font-bold text-base sm:text-lg py-3 sm:py-4 px-2 rounded-xl shadow mb-3 flex items-center justify-center gap-2 flex-wrap min-h-[3.5rem]">
+            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1.5em" width="1.5em" class="flex-shrink-0" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
+            <span class="whitespace-normal text-center leading-tight">Exportar Relatório CSV</span>
         </button>
         
-        <button id="btn-new" class="w-full bg-gray-300 hover:bg-gray-400 transition-colors text-gray-800 font-bold text-lg py-4 rounded-xl shadow">
+        <button id="btn-new" class="w-full bg-gray-300 hover:bg-gray-400 transition-colors text-gray-800 font-bold text-base sm:text-lg py-3 sm:py-4 px-2 rounded-xl shadow min-h-[3.5rem] whitespace-normal leading-tight text-center">
             Nova Conferência
         </button>
     </div>
 
     <script>
-        // Lista Base de Lojas
+        // Lista Base de Lojas (7022 e 7024 adicionadas com base nas imagens)
         const lojasBase = [
-            "7016", "7021", "7025", "7026", "7027", "7030", "7037", "7040", 
+            "7016", "7021", "7022", "7024", "7025", "7026", "7027", "7030", "7037", "7040", 
             "7042", "7044", "7049", "7050", "7052", "7056", "7060", "7061", 
             "7071", "7076", "7077", "7100", "10347", "11458", "12641", 
             "16279", "16787", "17261", "7019", "7104", "17262", "17247", "17523"
@@ -182,7 +182,6 @@
         const setupErrorMsg = document.getElementById('setup-error-msg');
 
         function initApp() {
-            // Popula o Datalist
             lojasBase.forEach(loja => {
                 const option = document.createElement('option');
                 option.value = loja;
@@ -198,10 +197,9 @@
 
         function saveRecentStore(store) {
             let stores = getRecentStores();
-            // Remove se já existe para colocar no começo
             stores = stores.filter(s => s !== store);
             stores.unshift(store);
-            if(stores.length > 5) stores.pop(); // Mantém apenas as 5 mais recentes
+            if(stores.length > 5) stores.pop();
             localStorage.setItem('recentStores', JSON.stringify(stores));
         }
 
@@ -214,7 +212,7 @@
             }
             stores.forEach(store => {
                 const btn = document.createElement('button');
-                btn.className = 'bg-gray-200 hover:bg-blue-100 text-gray-800 font-medium py-2 px-4 rounded-full text-sm border border-gray-300 transition-colors shadow-sm';
+                btn.className = 'bg-gray-200 hover:bg-blue-100 text-gray-800 font-medium py-1.5 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm border border-gray-300 transition-colors shadow-sm whitespace-nowrap';
                 btn.innerText = store;
                 btn.onclick = () => { 
                     storeInput.value = store; 
@@ -227,13 +225,11 @@
         async function setupAudio() {
             if(!synthSuccess) {
                 await Tone.start();
-                // Som de Sucesso: Bip duplo agudo e amigável
                 synthSuccess = new Tone.PolySynth(Tone.Synth, {
                     oscillator: { type: "sine" },
                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 }
                 }).toDestination();
                 
-                // Som de Erro: Buzzer grave e agressivo
                 synthError = new Tone.Synth({
                     oscillator: { type: "sawtooth" },
                     envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.4 }
@@ -249,7 +245,6 @@
             if(synthError) synthError.triggerAttackRelease("C2", "0.5s");
         }
 
-        // Permitir apertar "Enter" para iniciar
         storeInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -260,6 +255,7 @@
         btnStart.onclick = async () => {
             const val = storeInput.value.trim();
             if(!val) {
+                setupErrorMsg.innerText = "Por favor, digite ou selecione uma loja.";
                 setupErrorMsg.classList.remove('hidden');
                 return;
             }
@@ -268,10 +264,8 @@
             lojaAlvo = val;
             saveRecentStore(lojaAlvo);
             
-            // Inicia áudio do usuário (requisito de segurança dos navegadores modernos)
             await setupAudio();
             
-            // Reset estado
             historicoLeituras = [];
             contagemTotal = 0;
             contagemCorreta = 0;
@@ -283,7 +277,6 @@
             screenSetup.classList.add('hidden');
             screenConference.classList.remove('hidden');
             
-            // Foca no input e força ele a não perder o foco
             setTimeout(() => {
                 barcodeInput.focus();
             }, 100);
@@ -291,9 +284,10 @@
 
         let pressTimer;
         let progressInterval;
-        const holdDuration = 1500; // Tempo necessário segurando: 1.5 segundos
+        const holdDuration = 1500; 
 
         const startPress = (e) => {
+            if(e.type === 'touchstart') e.preventDefault(); 
             const spinner = document.getElementById('btn-end-spinner');
             const progress = document.getElementById('btn-end-progress');
             spinner.classList.remove('hidden');
@@ -301,14 +295,12 @@
             let startTime = Date.now();
             progress.style.width = '0%';
             
-            // Animação da barra de progresso do botão
             progressInterval = setInterval(() => {
                 let elapsed = Date.now() - startTime;
                 let percent = Math.min((elapsed / holdDuration) * 100, 100);
                 progress.style.width = percent + '%';
             }, 50);
 
-            // Confirmação final após o tempo esgotar
             pressTimer = setTimeout(() => {
                 clearInterval(progressInterval);
                 finishConference();
@@ -325,24 +317,20 @@
             if(spinner) spinner.classList.add('hidden');
             if(progress) progress.style.width = '0%';
             
-            // Se o cara desistiu de clicar em encerrar, volta o foco pro leitor
             if (!screenConference.classList.contains('hidden')) {
                 barcodeInput.focus();
             }
         };
 
-        // Eventos para abranger toques na tela do celular, PDA e mouse
         btnEnd.addEventListener('mousedown', startPress);
-        btnEnd.addEventListener('touchstart', startPress);
+        btnEnd.addEventListener('touchstart', startPress, {passive: false});
         
         btnEnd.addEventListener('mouseup', cancelPress);
         btnEnd.addEventListener('mouseleave', cancelPress);
         btnEnd.addEventListener('touchend', cancelPress);
 
         function finishConference() {
-            // Interrompe qualquer animação de botão que tenha sobrado
             cancelPress();
-            
             document.getElementById('summary-total').innerText = contagemTotal;
             document.getElementById('summary-correct').innerText = contagemCorreta;
             document.getElementById('summary-wrong').innerText = contagemErrada;
@@ -358,14 +346,12 @@
             screenSetup.classList.remove('hidden');
         };
 
-        // Mantém o input sempre focado se o usuário clicar fora dele durante a conferência
         document.addEventListener('click', (e) => {
             if (!screenConference.classList.contains('hidden') && e.target !== btnEnd && !btnEnd.contains(e.target)) {
                 barcodeInput.focus();
             }
         });
 
-        // Previne perder o foco do campo na conferência quando tenta trocar de aba/aplicativo e voltar
         barcodeInput.addEventListener('blur', () => {
             if (!screenConference.classList.contains('hidden')) {
                 setTimeout(() => barcodeInput.focus(), 10);
@@ -376,35 +362,41 @@
             if (e.key === 'Enter') {
                 e.preventDefault();
                 processarLeitura(barcodeInput.value);
-                barcodeInput.value = ''; // Limpa para o próximo bip do leitor
+                barcodeInput.value = ''; 
             }
         });
 
-        /**
-         * FUNÇÃO CRÍTICA: Extrai apenas o NÚMERO DA LOJA de dentro do código lido.
-         */
         function extrairLojaDoCodigo(codigoCompleto) {
             codigoCompleto = codigoCompleto.trim();
             
-            // 1. Checa se o código contém a própria loja alvo (Prioridade máxima)
-            if (codigoCompleto.includes(lojaAlvo)) {
-                return lojaAlvo;
-            }
-            
-            // 2. Se não era a loja alvo, procura qual outra loja cadastrada está DENTRO do código
-            for (let i = 0; i < lojasBase.length; i++) {
-                if (codigoCompleto.includes(lojasBase[i])) {
-                    return lojasBase[i]; // Retorna SOMENTE o número da loja achada (ex: "7021")
-                }
-            }
-            
-            // 3. Se não achou na nossa lista base, tenta extrair qualquer bloco de 4 ou 5 dígitos seguidos
-            const match = codigoCompleto.match(/\d{4,5}/);
-            if (match) {
-                return match[0];
+            // Nova Regra Baseada nas Imagens Fornecidas:
+            // 1. O código da etiqueta tem exatos 20 caracteres.
+            // 2. A loja está localizada a partir da posição 9 (índice 8).
+            // 3. A loja ocupa exatamente 5 posições de tamanho.
+            // 4. Lojas de 4 dígitos possuem um '0' na frente (ex: 07022).
+            if (codigoCompleto.length === 20) {
+                // Pega os 5 caracteres a partir do índice 8 (onde começa a loja)
+                let blocoLoja = codigoCompleto.substring(8, 13);
+                
+                // Converte para Int e volta para String para remover zeros à esquerda
+                // Exemplo: "07022" vira 7022, que vira "7022".
+                // Exemplo: "11458" vira 11458, que vira "11458".
+                let numeroLojaExtraido = parseInt(blocoLoja, 10).toString();
+                
+                return numeroLojaExtraido;
             }
 
-            // 4. Se não conseguiu identificar nada que pareça uma loja, devolve "Inválida"
+            // Fallback de Segurança: Se lerem outra coisa sem querer (Ex: Código curto, bipe manual)
+            // Mantemos a busca pela loja alvo ou na lista como garantia extra.
+            if (codigoCompleto.includes(lojaAlvo)) return lojaAlvo;
+            
+            for (let i = 0; i < lojasBase.length; i++) {
+                if (codigoCompleto.includes(lojasBase[i])) return lojasBase[i];
+            }
+            
+            const match = codigoCompleto.match(/\d{4,5}/);
+            if (match) return match[0];
+            
             return "Inválida";
         }
 
@@ -413,11 +405,9 @@
             
             contagemTotal++;
             const lojaLida = extrairLojaDoCodigo(codigoLido);
-            
-            // Lógica de verificação
             const isCorreto = lojaLida === lojaAlvo;
-            
             const timestamp = new Date().toLocaleString('pt-BR');
+            
             historicoLeituras.push({
                 dataHora: timestamp,
                 caixaLida: codigoLido,
@@ -438,18 +428,16 @@
         function exibirSucesso() {
             playSuccessAudio();
             
-            feedbackArea.className = "flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-75 bg-green-500 relative";
+            feedbackArea.className = "flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-75 bg-green-500 w-full overflow-hidden";
             statusText.innerText = "CAIXA CORRETA";
-            statusText.className = "text-5xl font-black text-white text-center uppercase tracking-widest mb-2";
+            statusText.className = "text-4xl sm:text-5xl font-black text-white text-center uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm108.25 138.29l-136 136a16 16 0 01-22.62 0l-58.34-58.34a16 16 0 0122.62-22.62l47 47 124.69-124.69a16 16 0 0122.65 22.65z"></path></svg>`;
             errorDetails.classList.add('hidden');
             
-            // Efeito Flash
             feedbackArea.classList.remove('flash-green', 'flash-red');
-            void feedbackArea.offsetWidth; // Trigger reflow para reiniciar animação
+            void feedbackArea.offsetWidth; 
             feedbackArea.classList.add('flash-green');
 
-            // Voltar ao neutro após 1.2 segundos
             clearTimeout(window.feedbackTimeout);
             window.feedbackTimeout = setTimeout(resetFeedbackUI, 1200);
         }
@@ -457,51 +445,42 @@
         function exibirErro(lojaErrada) {
             playErrorAudio();
             
-            feedbackArea.className = "flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-75 bg-red-600 relative";
+            feedbackArea.className = "flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-75 bg-red-600 w-full overflow-hidden";
             statusText.innerText = "ERRO DE ROTA!";
-            statusText.className = "text-5xl font-black text-white text-center uppercase tracking-widest mb-2";
+            statusText.className = "text-4xl sm:text-5xl font-black text-white text-center uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm86.63 272a16 16 0 11-22.63 22.63L256 278.63l-64 64a16 16 0 01-22.63-22.63l64-64-64-64a16 16 0 0122.63-22.63l64 64 64-64a16 16 0 0122.63 22.63l-64 64z"></path></svg>`;
             
-            // Mostra apenas o NÚMERO extraído e não mais o código inteiro
             wrongStoreRead.innerText = lojaErrada;
             errorDetails.classList.remove('hidden');
             errorDetails.classList.add('flex');
 
-            // Efeito Flash
             feedbackArea.classList.remove('flash-green', 'flash-red');
-            void feedbackArea.offsetWidth; // Trigger reflow
+            void feedbackArea.offsetWidth; 
             feedbackArea.classList.add('flash-red');
 
-            // Quando dá erro, demora mais para sumir (3.5 segundos) para o operador ver bem
             clearTimeout(window.feedbackTimeout);
             window.feedbackTimeout = setTimeout(resetFeedbackUI, 3500);
         }
 
         function resetFeedbackUI() {
-            feedbackArea.className = "flex-1 flex flex-col items-center justify-center p-4 transition-colors duration-500 bg-gray-100 relative";
+            feedbackArea.className = "flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-500 bg-gray-100 w-full overflow-hidden";
             statusText.innerText = "Aguardando Leitura";
-            statusText.className = "text-3xl font-bold text-gray-400 text-center uppercase tracking-widest mb-2";
+            statusText.className = "text-2xl sm:text-3xl font-bold text-gray-400 uppercase tracking-widest mb-2 whitespace-normal break-words w-full text-center px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>`;
             errorDetails.classList.add('hidden');
             errorDetails.classList.remove('flex');
         }
 
         btnExport.onclick = () => {
-            if (historicoLeituras.length === 0) {
-                return;
-            }
+            if (historicoLeituras.length === 0) return;
 
-            // Headers do CSV
             let csvContent = "Data/Hora,Caixa Bipada,Loja Alvo,Loja Lida (Extraida),Status\n";
             
-            // Linhas
             historicoLeituras.forEach(row => {
-                // Limpa quebras de linha ou aspas que possam quebrar o CSV
                 let caixa = row.caixaLida.replace(/"/g, '""');
                 csvContent += `"${row.dataHora}","${caixa}","${row.lojaAlvo}","${row.lojaIdentificada}","${row.status}"\n`;
             });
 
-            // Criação do Blob e Download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             
@@ -510,12 +489,12 @@
             const fileName = `Relatorio_Conferencia_${lojaAlvo}_${new Date().getTime()}.csv`;
             link.setAttribute("download", fileName);
             
-            document.body.appendChild(link); // Requerido para Firefox
+            document.body.appendChild(link); 
             link.click();
             document.body.removeChild(link);
         };
 
-        // Bootstrap da aplicação (inicializa listas e cache)
+        // Inicializa opções e caches na tela principal
         initApp();
     </script>
 </body>
