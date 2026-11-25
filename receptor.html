@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Receptor de Conferência</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <style>
 :root{--bg:#f3f5fa;--card:#fff;--ink:#1c2740;--mut:#6a7588;--line:#e2e7f0;--pri:#2457d6;--ok:#15803d;--okbg:#e6f6ec;--er:#c81e1e;--erbg:#fdeaea}
 *{box-sizing:border-box}
@@ -241,10 +240,9 @@ function renderHome() {
   $('#main').innerHTML = `<div class="card">
     <h2>Bipar QR codes</h2>
     <p class="mut">Os registros serão salvos na data <b>${fmtData(dataSel)}</b>. Bipe cada QR exibido na PDA.</p>
-    <input id="scan" class="big" placeholder="Clique aqui e bipe o QR..." autocomplete="off">
-    <div class="row"><button class="btn sec" id="btnCam" onclick="toggleCam()">📷 Usar webcam</button><span id="prog" class="mut">Aguardando QR...</span></div>
-    <video id="vid" playsinline hidden></video></div>`;
-  $('#scan').addEventListener('keydown', e => { if (e.key === 'Enter') { receber(e.target.value, false); e.target.value = ''; } });
+    <input id="scan" class="big" placeholder="Bipe o QR aqui (o cursor fica sempre neste campo)" autocomplete="off">
+    <div class="row"><span id="prog" class="mut">Aguardando QR...</span></div></div>`;
+  $('#scan').addEventListener('keydown', e => { if (e.key === 'Enter') { receber(e.target.value); e.target.value = ''; } });
   $('#scan').focus(); atualizarProg();
 }
 function atualizarProg() {
@@ -253,37 +251,25 @@ function atualizarProg() {
   const faltam = [...Array(pend.total).keys()].map(i => i + 1).filter(i => !pend.lotes.has(i));
   p.innerHTML = `Loja <b>${pend.loja}</b>: ${pend.lotes.size} de ${pend.total} QR lidos` + (faltam.length ? ' — faltam: ' + faltam.join(', ') : '');
 }
-function receber(txt, cam) {
-  if (cam && Date.now() < bloqueio) return;
+function receber(txt) {
   if ($('#modal').classList.contains('open')) return;
-  const p = txt.trim().split('|');
-  if (p[0] !== 'LV1' || p.length < 5) { if (!cam) toast('QR não reconhecido'); return; }
-  const [, n, t, l, lista] = p;
+  const bruto = txt.trim();
+  if (!bruto) return;
+  // Tolerante ao layout do teclado: qualquer símbolo vira separador, maiúscula/minúscula tanto faz
+  const tk = bruto.split(/[^0-9A-Za-z]+/).filter(Boolean);
+  if (tk.length < 5 || tk[0].toUpperCase() !== 'LV1' || !/^\d+$/.test(tk[1]) || !/^\d+$/.test(tk[2])) {
+    console.log('QR recebido (não reconhecido):', JSON.stringify(bruto));
+    toast('QR não reconhecido. Recebido: ' + bruto.slice(0, 45));
+    return;
+  }
+  const n = +tk[1], t = +tk[2], l = tk[3], lista = tk.slice(4);
   if (pend && pend.loja !== l) { toast(`Nova loja (${l}): leitura anterior descartada`); pend = null; }
-  if (!pend) pend = { loja: l, total: +t, lotes: new Map() };
-  pend.total = +t; pend.lotes.set(+n, lista.split(',').filter(Boolean));
+  if (!pend) pend = { loja: l, total: t, lotes: new Map() };
+  pend.total = t; pend.lotes.set(n, lista);
   atualizarProg();
   if (pend.lotes.size === pend.total) pedirOperador();
 }
-async function toggleCam() { camOn ? desligarCam() : await ligarCam(); }
-async function ligarCam() {
-  if (typeof jsQR === 'undefined') { toast('Biblioteca de leitura indisponível (sem internet?)'); return; }
-  const v = $('#vid');
-  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); }
-  catch (e) { toast('Não foi possível acessar a webcam'); return; }
-  v.srcObject = stream; v.hidden = false; await v.play(); camOn = true; $('#btnCam').textContent = '⏹ Desligar webcam';
-  const c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true });
-  (function loop() {
-    if (!camOn) return;
-    if (v.readyState === v.HAVE_ENOUGH_DATA) {
-      c.width = v.videoWidth; c.height = v.videoHeight; x.drawImage(v, 0, 0);
-      const q = jsQR(x.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
-      if (q) receber(q.data, true);
-    }
-    requestAnimationFrame(loop);
-  })();
-}
-function desligarCam() { camOn = false; if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+function desligarCam() {}
 
 // ---------- Operador ----------
 function pedirOperador() {
