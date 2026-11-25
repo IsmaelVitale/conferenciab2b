@@ -471,28 +471,47 @@
             errorDetails.classList.remove('flex');
         }
 
-        btnExport.onclick = () => {
-            if (historicoLeituras.length === 0) return;
+btnExport.onclick = () => {
+    if (historicoLeituras.length === 0) return;
 
-            let csvContent = "Data/Hora,Caixa Bipada,Loja Alvo,Loja Lida (Extraida),Status\n";
-            
-            historicoLeituras.forEach(row => {
-                let caixa = row.caixaLida.replace(/"/g, '""');
-                csvContent += `"${row.dataHora}","${caixa}","${row.lojaAlvo}","${row.lojaIdentificada}","${row.status}"\n`;
-            });
+    const certos = historicoLeituras.filter(r => r.status === 'CORRETO');
+    const errados = historicoLeituras.filter(r => r.status === 'ERRO');
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            const fileName = `Relatorio_Conferencia_${lojaAlvo}_${new Date().getTime()}.csv`;
-            link.setAttribute("download", fileName);
-            
-            document.body.appendChild(link); 
-            link.click();
-            document.body.removeChild(link);
-        };
+    // ="..." força o Excel a tratar o bulto como texto (evita notação científica nos 20 dígitos)
+    const txt = (v) => `="${String(v).replace(/"/g, '""')}"`;
+    const sep = ';'; // separador padrão do Excel pt-BR
+
+    let csv = '\uFEFF'; // BOM para acentuação correta
+    csv += ['Loja Alvo', 'Bultos Certos (Loja ' + lojaAlvo + ')', 'Bultos Errados', 'Loja Identificada no Errado'].join(sep) + '\n';
+
+    const linhas = Math.max(certos.length, errados.length);
+    for (let i = 0; i < linhas; i++) {
+        const c = certos[i];
+        const e = errados[i];
+        csv += [
+            i === 0 ? txt(lojaAlvo) : '',
+            c ? txt(c.caixaLida) : '',
+            e ? txt(e.caixaLida) : '',
+            e ? txt(e.lojaIdentificada) : ''
+        ].join(sep) + '\n';
+    }
+
+    // Totais ao final
+    csv += '\n';
+    csv += ['TOTAL', certos.length, errados.length, ''].join(sep) + '\n';
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Relatorio_Conferencia_${lojaAlvo}_${new Date().getTime()}.csv`);
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
 
         // Inicializa opções e caches na tela principal
         initApp();
