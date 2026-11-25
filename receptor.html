@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Receptor de Conferência</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<style>
+:root{--bg:#f3f5fa;--card:#fff;--ink:#1c2740;--mut:#6a7588;--line:#e2e7f0;--pri:#2457d6;--ok:#15803d;--okbg:#e6f6ec;--er:#c81e1e;--erbg:#fdeaea}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:system-ui,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;cursor:pointer}
+header{background:#14213d;color:#fff;padding:10px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px}
+.sp{flex:1}
+.datebox{display:flex;align-items:center;gap:6px;background:#1f2f55;padding:5px 8px;border-radius:10px}
+.datebox input{background:#fff;border:0;border-radius:6px;padding:5px 8px;font:inherit;color:var(--ink)}
+.datebox button,.menu summary{background:#2c4072;color:#fff;border:0;border-radius:6px;padding:6px 10px}
+.datebox button:hover,.menu summary:hover{background:#3a5190}
+.wd{font-size:12px;opacity:.8;text-transform:capitalize;min-width:80px}
+#stat{font-size:12px;opacity:.85}
+#stat.bad{color:#ffb4b4;opacity:1}
+.menu{position:relative}
+.menu summary{list-style:none}
+.menu summary::-webkit-details-marker{display:none}
+.menu .pop{position:absolute;right:0;top:36px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px #0003;padding:6px;z-index:20;width:240px}
+.menu .pop button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 10px;border-radius:6px}
+.menu .pop button:hover{background:#eef3ff}
+.layout{flex:1;display:flex;min-height:0}
+aside{width:260px;background:#fff;border-right:1px solid var(--line);padding:12px;overflow:auto}
+aside h4{margin:16px 6px 6px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+.nav{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 12px;margin-bottom:3px;background:none;border:0;border-radius:8px;text-align:left;color:var(--ink)}
+.nav:hover{background:#f0f4fb}
+.nav.on{background:#e6eeff;color:var(--pri);font-weight:600}
+.nav span{display:flex;gap:4px}
+.nav i{font-style:normal;font-size:12px;min-width:26px;text-align:center;padding:2px 6px;border-radius:99px;font-weight:600}
+i.ok{background:var(--okbg);color:var(--ok)}
+i.er{background:var(--erbg);color:var(--er)}
+i.zero{background:#eef0f4;color:#9aa3b2}
+main{flex:1;overflow:auto;padding:22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:980px;margin:0 auto 16px;box-shadow:0 1px 3px #0000000a}
+.card h2{margin:0 0 4px;font-size:22px}
+.card h2 small{font-size:14px;color:var(--mut);font-weight:400;margin-left:8px}
+.mut{color:var(--mut);font-size:14px}
+.big{width:100%;font-size:20px;padding:16px;border:2px solid #c9d6f5;border-radius:12px;margin:16px 0 12px;outline:none}
+.big:focus{border-color:var(--pri);box-shadow:0 0 0 4px #2457d622}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{background:var(--pri);color:#fff;border:0;border-radius:8px;padding:9px 16px;font-weight:600}
+.btn:hover{filter:brightness(1.1)}
+.btn.sec{background:#e9eefb;color:var(--pri)}
+.btn.red{background:var(--er)}
+.btn.sm{padding:6px 10px;font-size:13px}
+video{width:100%;max-width:420px;margin-top:14px;border-radius:10px;background:#000;display:block}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.chips{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}
+.chip{padding:10px 16px;border-radius:10px;font-size:13px;color:var(--mut);background:#f3f5fa}
+.chip b{display:block;font-size:26px;color:var(--ink)}
+.chip.ok{background:var(--okbg)}.chip.ok b{color:var(--ok)}
+.chip.er{background:var(--erbg)}.chip.er b{color:var(--er)}
+.copybar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.copybar label{font-size:13px;color:var(--mut);display:flex;gap:4px;align-items:center}
+.env{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:14px}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{position:sticky;top:0;text-align:left;padding:9px 12px;background:#f3f5fa;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
+td{padding:7px 12px;border-top:1px solid var(--line);font-family:Consolas,monospace}
+td.c{color:var(--ok)}td.e{color:var(--er)}
+h3{margin:18px 0 8px;font-size:15px}
+#modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:50}
+#modal.open{display:flex}
+#modal .box{background:#fff;border-radius:14px;padding:24px;width:min(420px,92vw)}
+#modal input{width:100%;font-size:18px;padding:12px;border:2px solid #c9d6f5;border-radius:10px;margin:12px 0;outline:none}
+#modal input:focus{border-color:var(--pri)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#14213d;color:#fff;padding:11px 20px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+#toast.show{opacity:1}
+@media(max-width:760px){.layout{flex-direction:column}aside{width:100%;max-height:200px;border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📦 Receptor de Conferência</h1>
+  <span class="sp"></span>
+  <span id="stat"></span>
+  <div class="datebox">
+    <button onclick="mudaDia(-1)" title="Dia anterior">◀</button>
+    <input type="date" id="dt" onchange="setData(this.value)">
+    <button onclick="mudaDia(1)" title="Próximo dia">▶</button>
+    <button onclick="setData(hoje())">Hoje</button>
+    <span class="wd" id="wd"></span>
+  </div>
+  <details class="menu" id="menu">
+    <summary>⚙ Dados</summary>
+    <div class="pop">
+      <div id="fsBtns">
+        <button onclick="criarArq()">💾 Criar arquivo de dados (JSON)</button>
+        <button onclick="abrirArq()">📂 Abrir arquivo de dados existente</button>
+      </div>
+      <button onclick="backup()">⬇ Baixar backup JSON</button>
+      <button onclick="$('#imp').click()">⬆ Importar JSON (mesclar)</button>
+    </div>
+  </details>
+  <input type="file" id="imp" accept=".json" hidden onchange="importar(this)">
+</header>
+
+<div class="layout">
+  <aside id="side"></aside>
+  <main id="main"></main>
+</div>
+
+<div id="modal">
+  <div class="box">
+    <h2 style="margin:0 0 4px">Quem bipou?</h2>
+    <div class="mut" id="modalInfo"></div>
+    <input id="op" list="ops" placeholder="Nome do operador" autocomplete="off">
+    <datalist id="ops"></datalist>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn sec" onclick="cancelarOp()">Descartar</button>
+      <button class="btn" onclick="confirmarOp()">Salvar registro</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const KEY = 'receptor_db_v1';
+let db = { envios: [] }, fh = null;
+let view = 'home', lojaSel = null, dataSel = hoje();
+let pend = null, bloqueio = 0, stream = null, camOn = false;
+
+function hoje() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function fmtData(s) { const [y, m, d] = s.split('-'); return `${d}/${m}/${y}`; }
+function extrairLoja(c) {
+  c = c.trim();
+  if (c.length === 20) { const n = parseInt(c.substring(8, 13), 10); return isNaN(n) ? 'Inválida' : String(n); }
+  return 'Inválida';
+}
+function toast(t) {
+  const el = $('#toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+function status(t, ok) { const s = $('#stat'); s.textContent = '💾 ' + t; s.className = ok ? '' : 'bad'; }
+
+// ---------- Persistência ----------
+function carregar() {
+  try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.envios)) db = o; } catch (e) {}
+}
+async function salvar() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
+  if (fh) {
+    try {
+      const w = await fh.createWritable();
+      await w.write(JSON.stringify(db, null, 1)); await w.close();
+      status('Salvo no navegador e em ' + fh.name, true);
+    } catch (e) { status('Erro ao gravar o arquivo — vincule novamente', false); }
+  } else status('Salvo no navegador (vincule um arquivo JSON para ter backup)', true);
+}
+function mesclar(o) {
+  const ids = new Set(db.envios.map(e => e.id)); let n = 0;
+  (o.envios || []).forEach(e => { if (e && e.id && e.loja && e.data && Array.isArray(e.bultos) && !ids.has(e.id)) { db.envios.push(e); n++; } });
+  return n;
+}
+const FT = [{ description: 'JSON', accept: { 'application/json': ['.json'] } }];
+async function criarArq() {
+  $('#menu').open = false;
+  try { fh = await showSaveFilePicker({ suggestedName: 'receptor_dados.json', types: FT }); await salvar(); render(); toast('Arquivo criado e vinculado'); }
+  catch (e) { if (e.name !== 'AbortError') toast('Não foi possível criar o arquivo'); }
+}
+async function abrirArq() {
+  $('#menu').open = false;
+  try {
+    const [h] = await showOpenFilePicker({ types: FT });
+    const t = await (await h.getFile()).text();
+    let n = 0; if (t.trim()) n = mesclar(JSON.parse(t));
+    fh = h; await salvar(); render(); toast(`Arquivo vinculado (${n} registros carregados)`);
+  } catch (e) { if (e.name !== 'AbortError') toast('Não foi possível abrir o arquivo'); }
+}
+function backup() {
+  $('#menu').open = false;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 1)], { type: 'application/json' }));
+  a.download = `receptor_backup_${hoje()}.json`; a.click();
+}
+async function importar(inp) {
+  $('#menu').open = false;
+  try { const n = mesclar(JSON.parse(await inp.files[0].text())); await salvar(); render(); toast(`${n} registros importados`); }
+  catch (e) { toast('Arquivo inválido'); }
+  inp.value = '';
+}
+
+// ---------- Dados ----------
+function dadosLoja(loja, data) {
+  const es = db.envios.filter(e => e.loja === loja && e.data === data);
+  const u = [...new Set(es.flatMap(e => e.bultos))];
+  return { es, certos: u.filter(c => extrairLoja(c) === loja), errados: u.filter(c => extrairLoja(c) !== loja) };
+}
+function lojasDoDia() {
+  return [...new Set(db.envios.filter(e => e.data === dataSel).map(e => e.loja))].sort((a, b) => Number(a) - Number(b));
+}
+
+// ---------- Data ----------
+function setData(v) {
+  dataSel = v || hoje(); $('#dt').value = dataSel;
+  if (view === 'loja' && !dadosLoja(lojaSel, dataSel).es.length) view = 'resumo';
+  render();
+}
+function mudaDia(n) {
+  const [y, m, d] = dataSel.split('-').map(Number); const dt = new Date(y, m - 1, d + n);
+  setData(dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0'));
+}
+
+// ---------- Navegação ----------
+function irHome() { view = 'home'; render(); }
+function irResumo() { desligarCam(); view = 'resumo'; render(); }
+function irLoja(l) { desligarCam(); view = 'loja'; lojaSel = l; render(); }
+function render() {
+  const [y, m, d] = dataSel.split('-').map(Number);
+  $('#dt').value = dataSel;
+  $('#wd').textContent = new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long' });
+  renderSide();
+  if (view === 'home') renderHome(); else if (view === 'resumo') renderResumo(); else renderLoja();
+}
+function renderSide() {
+  const ls = lojasDoDia();
+  $('#side').innerHTML =
+    `<button class="nav ${view === 'home' ? 'on' : ''}" onclick="irHome()">📷 Bipar QR codes</button>
+     <button class="nav ${view === 'resumo' ? 'on' : ''}" onclick="irResumo()">📋 Resumo do dia</button>
+     <h4>Lojas · ${fmtData(dataSel)} (${ls.length})</h4>` +
+    (ls.length ? ls.map(l => {
+      const d = dadosLoja(l, dataSel);
+      return `<button class="nav ${view === 'loja' && lojaSel === l ? 'on' : ''}" onclick="irLoja('${l}')"><b>Loja ${l}</b>
+        <span><i class="ok">${d.certos.length}</i><i class="${d.errados.length ? 'er' : 'zero'}">${d.errados.length}</i></span></button>`;
+    }).join('') : '<p class="mut" style="padding:0 6px">Nenhuma loja nesta data.</p>');
+}
+
+// ---------- Tela: Bipar ----------
+function renderHome() {
+  $('#main').innerHTML = `<div class="card">
+    <h2>Bipar QR codes</h2>
+    <p class="mut">Os registros serão salvos na data <b>${fmtData(dataSel)}</b>. Bipe cada QR exibido na PDA.</p>
+    <input id="scan" class="big" placeholder="Clique aqui e bipe o QR..." autocomplete="off">
+    <div class="row"><button class="btn sec" id="btnCam" onclick="toggleCam()">📷 Usar webcam</button><span id="prog" class="mut">Aguardando QR...</span></div>
+    <video id="vid" playsinline hidden></video></div>`;
+  $('#scan').addEventListener('keydown', e => { if (e.key === 'Enter') { receber(e.target.value, false); e.target.value = ''; } });
+  $('#scan').focus(); atualizarProg();
+}
+function atualizarProg() {
+  const p = $('#prog'); if (!p || view !== 'home') return;
+  if (!pend) { p.textContent = 'Aguardando QR...'; return; }
+  const faltam = [...Array(pend.total).keys()].map(i => i + 1).filter(i => !pend.lotes.has(i));
+  p.innerHTML = `Loja <b>${pend.loja}</b>: ${pend.lotes.size} de ${pend.total} QR lidos` + (faltam.length ? ' — faltam: ' + faltam.join(', ') : '');
+}
+function receber(txt, cam) {
+  if (cam && Date.now() < bloqueio) return;
+  if ($('#modal').classList.contains('open')) return;
+  const p = txt.trim().split('|');
+  if (p[0] !== 'LV1' || p.length < 5) { if (!cam) toast('QR não reconhecido'); return; }
+  const [, n, t, l, lista] = p;
+  if (pend && pend.loja !== l) { toast(`Nova loja (${l}): leitura anterior descartada`); pend = null; }
+  if (!pend) pend = { loja: l, total: +t, lotes: new Map() };
+  pend.total = +t; pend.lotes.set(+n, lista.split(',').filter(Boolean));
+  atualizarProg();
+  if (pend.lotes.size === pend.total) pedirOperador();
+}
+async function toggleCam() { camOn ? desligarCam() : await ligarCam(); }
+async function ligarCam() {
+  if (typeof jsQR === 'undefined') { toast('Biblioteca de leitura indisponível (sem internet?)'); return; }
+  const v = $('#vid');
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); }
+  catch (e) { toast('Não foi possível acessar a webcam'); return; }
+  v.srcObject = stream; v.hidden = false; await v.play(); camOn = true; $('#btnCam').textContent = '⏹ Desligar webcam';
+  const c = document.createElement('canvas'), x = c.getContext('2d', { willReadFrequently: true });
+  (function loop() {
+    if (!camOn) return;
+    if (v.readyState === v.HAVE_ENOUGH_DATA) {
+      c.width = v.videoWidth; c.height = v.videoHeight; x.drawImage(v, 0, 0);
+      const q = jsQR(x.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
+      if (q) receber(q.data, true);
+    }
+    requestAnimationFrame(loop);
+  })();
+}
+function desligarCam() { camOn = false; if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+
+// ---------- Operador ----------
+function pedirOperador() {
+  const total = [...Array(pend.total).keys()].flatMap(i => pend.lotes.get(i + 1) || []).length;
+  $('#modalInfo').innerHTML = `Loja <b>${pend.loja}</b> · ${total} bultos · ${fmtData(dataSel)}`;
+  $('#ops').innerHTML = [...new Set(db.envios.map(e => e.operador))].map(o => `<option value="${o}">`).join('');
+  let ult = ''; try { ult = localStorage.getItem('receptor_op') || ''; } catch (e) {}
+  $('#op').value = ult; $('#modal').classList.add('open'); $('#op').focus(); $('#op').select();
+}
+$('#op').addEventListener('keydown', e => { if (e.key === 'Enter') confirmarOp(); });
+function cancelarOp() { pend = null; $('#modal').classList.remove('open'); atualizarProg(); if ($('#scan')) $('#scan').focus(); }
+function confirmarOp() {
+  const nome = $('#op').value.trim();
+  if (!nome) { $('#op').focus(); return; }
+  try { localStorage.setItem('receptor_op', nome); } catch (e) {}
+  const bultos = [...new Set([...Array(pend.total).keys()].flatMap(i => pend.lotes.get(i + 1) || []).map(s => s.trim()))];
+  db.envios.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), loja: pend.loja, data: dataSel, operador: nome, hora: new Date().toISOString(), bultos });
+  const l = pend.loja; pend = null; bloqueio = Date.now() + 5000;
+  $('#modal').classList.remove('open'); salvar(); irLoja(l); toast('Registro salvo');
+}
+
+// ---------- Tela: Loja ----------
+function renderLoja() {
+  const d = dadosLoja(lojaSel, dataSel);
+  const n = Math.max(d.certos.length, d.errados.length);
+  let linhas = '';
+  for (let i = 0; i < n; i++) linhas += `<tr><td class="c">${d.certos[i] || ''}</td><td class="e">${d.errados[i] || ''}</td><td>${d.errados[i] ? extrairLoja(d.errados[i]) : ''}</td></tr>`;
+  $('#main').innerHTML = `<div class="card">
+    <div class="top"><h2>Loja ${lojaSel}<small>${fmtData(dataSel)}</small></h2>
+      <div class="copybar">
+        <label><input type="checkbox" id="cab" checked> Com cabeçalho</label>
+        <button class="btn" onclick="copiarLoja('tudo')">📋 Copiar tudo</button>
+        <button class="btn sec" onclick="copiarLoja('certos')">Só certos</button>
+        <button class="btn sec" onclick="copiarLoja('errados')">Só errados</button>
+      </div></div>
+    <div class="chips">
+      <div class="chip">Total<b>${d.certos.length + d.errados.length}</b></div>
+      <div class="chip ok">Certos<b>${d.certos.length}</b></div>
+      <div class="chip er">Errados<b>${d.errados.length}</b></div></div>
+    <h3>Registros de bipagem</h3>
+    ${d.es.map(e => `<div class="env"><span>👤 <b>${esc(e.operador)}</b> · ${new Date(e.hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · ${e.bultos.length} bultos</span>
+      <button class="btn red sm" onclick="excluir('${e.id}')">Excluir</button></div>`).join('')}
+    <h3>Bultos</h3>
+    <div class="scroll"><table><tr><th>Certos</th><th>Errados</th><th>Loja do errado</th></tr>${linhas || '<tr><td colspan="3">Sem bultos.</td></tr>'}</table></div></div>`;
+}
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function excluir(id) {
+  if (!confirm('Excluir este registro de bipagem?')) return;
+  db.envios = db.envios.filter(e => e.id !== id); salvar();
+  if (!dadosLoja(lojaSel, dataSel).es.length) view = 'resumo';
+  render();
+}
+function copiarLoja(modo) {
+  const d = dadosLoja(lojaSel, dataSel); let head, rows = [];
+  if (modo === 'certos') { head = ['Bultos Certos']; rows = d.certos.map(c => [c]); }
+  else if (modo === 'errados') { head = ['Bultos Errados', 'Loja Identificada']; rows = d.errados.map(c => [c, extrairLoja(c)]); }
+  else {
+    head = ['Loja', 'Bultos Certos', 'Bultos Errados', 'Loja do Errado'];
+    const n = Math.max(d.certos.length, d.errados.length);
+    for (let i = 0; i < n; i++) rows.push([lojaSel, d.certos[i] || '', d.errados[i] || '', d.errados[i] ? extrairLoja(d.errados[i]) : '']);
+  }
+  copiarTabela(head, rows);
+}
+
+// ---------- Tela: Resumo ----------
+function renderResumo() {
+  const ls = lojasDoDia();
+  const rows = ls.map(l => {
+    const d = dadosLoja(l, dataSel);
+    return [fmtData(dataSel), l, d.certos.length, d.errados.length, [...new Set(d.es.map(e => e.operador))].join('; ')];
+  });
+  window._resumo = rows;
+  const tc = rows.reduce((a, r) => a + r[2], 0), te = rows.reduce((a, r) => a + r[3], 0);
+  $('#main').innerHTML = `<div class="card">
+    <div class="top"><h2>Resumo do dia<small>${fmtData(dataSel)}</small></h2>
+      <div class="copybar"><label><input type="checkbox" id="cab" checked> Com cabeçalho</label>
+      <button class="btn" onclick="copiarResumo()">📋 Copiar resumo</button></div></div>
+    <div class="chips"><div class="chip">Lojas<b>${ls.length}</b></div><div class="chip ok">Certos<b>${tc}</b></div><div class="chip er">Errados<b>${te}</b></div></div>
+    <div class="scroll"><table><tr><th>Data</th><th>Loja</th><th>Certos</th><th>Errados</th><th>Operador(es)</th></tr>
+    ${rows.map(r => `<tr style="cursor:pointer" onclick="irLoja('${r[1]}')"><td>${r[0]}</td><td>${r[1]}</td><td class="c">${r[2]}</td><td class="${r[3] ? 'e' : ''}">${r[3]}</td><td>${esc(r[4])}</td></tr>`).join('') || '<tr><td colspan="5">Nenhum registro nesta data.</td></tr>'}
+    </table></div></div>`;
+}
+function copiarResumo() { copiarTabela(['Data', 'Loja', 'Certos', 'Errados', 'Operador(es)'], window._resumo || []); }
+
+// ---------- Copiar para o Excel (HTML com formato texto, preserva os 20 dígitos) ----------
+function copiarTabela(head, rows) {
+  if (!rows.length) { toast('Nada para copiar'); return; }
+  const cab = $('#cab') && $('#cab').checked;
+  const td = v => `<td style="mso-number-format:'\\@'">${esc(v)}</td>`;
+  const h = `<table>${cab ? '<tr>' + head.map(x => `<th>${esc(x)}</th>`).join('') + '</tr>' : ''}${rows.map(r => '<tr>' + r.map(td).join('') + '</tr>').join('')}</table>`;
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;left:-9999px;top:0'; div.innerHTML = h; document.body.appendChild(div);
+  const r = document.createRange(); r.selectNodeContents(div);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+  s.removeAllRanges(); div.remove();
+  toast(ok ? 'Copiado! Cole no Excel com Ctrl+V' : 'Não foi possível copiar');
+}
+
+// ---------- Início ----------
+document.addEventListener('click', e => {
+  if (view === 'home' && !$('#modal').classList.contains('open') && !e.target.closest('button,input,summary,details,.datebox') && $('#scan')) $('#scan').focus();
+});
+if (!window.showSaveFilePicker) $('#fsBtns').style.display = 'none';
+carregar(); status('Salvo no navegador (vincule um arquivo JSON para ter backup)', true);
+render();
+</script>
+</body>
+</html>
