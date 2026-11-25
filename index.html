@@ -4,32 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Validação de Doca</title>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Tone.js para feedback sonoro -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <style>
-        /* Desabilitando seleção de texto para evitar cliques acidentais no coletor */
-        body {
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        
-        /* Estilo customizado para piscar a tela */
+        body { user-select: none; -webkit-user-select: none; }
         .flash-green { animation: flashG 0.5s ease-out; }
         .flash-red { animation: flashR 0.5s ease-out; }
-        
-        @keyframes flashG {
-            0% { background-color: #22c55e; }
-            100% { background-color: #f3f4f6; }
-        }
-        @keyframes flashR {
-            0% { background-color: #ef4444; }
-            100% { background-color: #f3f4f6; }
-        }
+        @keyframes flashG { 0% { background-color: #22c55e; } 100% { background-color: #f3f4f6; } }
+        @keyframes flashR { 0% { background-color: #ef4444; } 100% { background-color: #f3f4f6; } }
+        #qr-box svg { width: min(85vw, 60vh); height: auto; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans h-[100dvh] w-full flex flex-col overflow-x-hidden overflow-y-auto">
@@ -42,66 +26,53 @@
 
         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md flex-1 overflow-y-auto">
             <label for="store-input" class="block text-sm font-medium text-gray-700 mb-2 whitespace-normal">Loja Alvo</label>
-            <!-- Input com Datalist permite escolher da lista ou digitar livremente -->
-            <input list="store-list" id="store-input" type="text" inputmode="numeric" 
-                   class="w-full text-2xl sm:text-3xl p-3 sm:p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-center" 
+            <input list="store-list" id="store-input" type="text" inputmode="numeric"
+                   class="w-full text-2xl sm:text-3xl p-3 sm:p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-center"
                    placeholder="Ex: 7016">
             <p id="setup-error-msg" class="text-red-500 font-medium text-center mt-3 text-sm hidden">Por favor, digite ou selecione uma loja.</p>
-            <datalist id="store-list">
-                <!-- Populado via JS -->
-            </datalist>
+            <datalist id="store-list"></datalist>
 
             <div class="mt-6">
                 <h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-3">Lojas Recentes</h3>
-                <div id="recent-stores" class="flex flex-wrap gap-2">
-                    <!-- Botões injetados via JS -->
-                </div>
+                <div id="recent-stores" class="flex flex-wrap gap-2"></div>
             </div>
         </div>
 
-        <!-- Botão com quebra de linha permitida (whitespace-normal) para telas estreitas -->
         <button id="btn-start" class="mt-4 sm:mt-6 w-full bg-blue-600 text-white font-bold text-lg sm:text-xl py-4 sm:py-5 px-2 rounded-xl shadow-lg active:bg-blue-800 transition-colors whitespace-normal break-words text-center min-h-[3.5rem]">
             Iniciar Conferência
         </button>
     </div>
 
     <div id="screen-conference" class="hidden flex flex-col h-full w-full">
-        <!-- Header ajustado com flex-wrap para jogar o botão pra baixo se não couber na mesma linha -->
         <header class="bg-blue-900 text-white p-3 sm:p-4 shadow-md flex flex-wrap justify-between items-center z-10 gap-2">
             <div class="flex-1 min-w-[50%]">
                 <span class="text-xs sm:text-sm opacity-80 block whitespace-normal break-words">Validando para loja:</span>
                 <span id="display-target-store" class="text-2xl sm:text-3xl font-bold tracking-wider break-words">---</span>
             </div>
-            
+
             <button id="btn-end" class="relative bg-red-500 hover:bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-bold shadow overflow-hidden flex items-center gap-2 select-none touch-none flex-shrink-0 text-sm sm:text-base">
                 <span>Encerrar</span>
-                
                 <svg id="btn-end-spinner" class="animate-spin h-4 w-4 sm:h-5 sm:w-5 text-white hidden z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-
                 <div id="btn-end-progress" class="absolute bottom-0 left-0 h-1.5 bg-red-800 w-0 transition-all duration-75 ease-linear"></div>
             </button>
         </header>
 
-        <!-- Área Central de Feedback. Usando justify-between para empurrar o leitor pro final naturalmente -->
         <main id="feedback-area" class="flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-200 bg-gray-100 w-full overflow-hidden">
-            
-            <!-- Espaçador invisível para centralizar o conteúdo do meio -->
             <div class="flex-1 flex flex-col items-center justify-end pb-4 w-full text-center">
                 <div id="status-icon" class="text-8xl sm:text-9xl mb-4 text-gray-300">
                     <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
                 </div>
                 <h2 id="status-text" class="text-2xl sm:text-3xl font-bold text-gray-400 uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2">Aguardando Leitura</h2>
-                
+
                 <div id="error-details" class="hidden flex-col items-center mt-2 sm:mt-4 w-full">
                     <span class="text-white text-base sm:text-lg font-bold bg-black bg-opacity-50 px-3 sm:px-4 py-1 rounded-full mb-1 whitespace-normal break-words text-center max-w-full">Loja lida na caixa:</span>
                     <span id="wrong-store-read" class="text-5xl sm:text-6xl font-black text-white drop-shadow-md break-all text-center">---</span>
                 </div>
             </div>
 
-            <!-- Campo de input (flui com flex layout evitando sobrepor teclado) -->
             <div class="w-full sm:w-3/4 max-w-sm opacity-50 pb-2 sm:pb-6 flex-shrink-0 mt-auto">
                 <input id="barcode-input" type="text" autocomplete="off"
                        class="w-full text-center text-lg sm:text-xl p-3 bg-white border-2 border-gray-300 rounded-lg shadow-inner focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:opacity-100 transition-opacity"
@@ -112,7 +83,7 @@
 
     <div id="screen-summary" class="hidden flex flex-col flex-1 p-4 max-w-md mx-auto w-full justify-center overflow-y-auto">
         <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6 whitespace-normal break-words">Resumo da Conferência</h2>
-        
+
         <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
             <div class="col-span-2 bg-blue-100 p-4 sm:p-6 rounded-xl text-center shadow">
                 <span class="block text-gray-600 text-sm sm:text-base font-semibold mb-1 whitespace-normal break-words">Total de Caixas</span>
@@ -128,50 +99,61 @@
             </div>
         </div>
 
+        <button id="btn-qr" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-base sm:text-lg py-3 sm:py-4 rounded-xl shadow mb-3 min-h-[3.5rem]">
+            Mostrar QR para o PC
+        </button>
+
         <button id="btn-export" class="w-full bg-green-600 hover:bg-green-700 transition-colors text-white font-bold text-base sm:text-lg py-3 sm:py-4 px-2 rounded-xl shadow mb-3 flex items-center justify-center gap-2 flex-wrap min-h-[3.5rem]">
             <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1.5em" width="1.5em" class="flex-shrink-0" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path></svg>
             <span class="whitespace-normal text-center leading-tight">Exportar Relatório CSV</span>
         </button>
-        
+
         <button id="btn-new" class="w-full bg-gray-300 hover:bg-gray-400 transition-colors text-gray-800 font-bold text-base sm:text-lg py-3 sm:py-4 px-2 rounded-xl shadow min-h-[3.5rem] whitespace-normal leading-tight text-center">
             Nova Conferência
         </button>
     </div>
 
+    <div id="qr-modal" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-4">
+        <p id="qr-info" class="font-bold text-lg mb-2 text-center"></p>
+        <div id="qr-box" class="bg-white"></div>
+        <div class="flex gap-2 mt-4 w-full max-w-xs">
+            <button id="qr-prev" class="flex-1 bg-gray-300 py-3 rounded-lg font-bold">◀</button>
+            <button id="qr-auto" class="flex-1 bg-yellow-400 py-3 rounded-lg font-bold">Pausar</button>
+            <button id="qr-next" class="flex-1 bg-gray-300 py-3 rounded-lg font-bold">▶</button>
+        </div>
+        <button id="qr-close" class="mt-3 w-full max-w-xs bg-red-500 text-white py-3 rounded-lg font-bold">Fechar</button>
+    </div>
+
     <script>
-        // Lista Base de Lojas (7022 e 7024 adicionadas com base nas imagens)
         const lojasBase = [
-            "7016", "7021", "7022", "7024", "7025", "7026", "7027", "7030", "7037", "7040", 
-            "7042", "7044", "7049", "7050", "7052", "7056", "7060", "7061", 
-            "7071", "7076", "7077", "7100", "10347", "11458", "12641", 
+            "7016", "7021", "7022", "7024", "7025", "7026", "7027", "7030", "7037", "7040",
+            "7042", "7044", "7049", "7050", "7052", "7056", "7060", "7061",
+            "7071", "7076", "7077", "7100", "10347", "11458", "12641",
             "16279", "16787", "17261", "7019", "7104", "17262", "17247", "17523"
         ];
 
-        // Estado Global do Sistema
         let lojaAlvo = "";
-        let historicoLeituras = []; 
+        let historicoLeituras = [];
         let contagemTotal = 0;
         let contagemCorreta = 0;
         let contagemErrada = 0;
-        
-        // Synths do Tone.js para áudio
+
         let synthSuccess;
         let synthError;
 
-        // Referências DOM
         const screenSetup = document.getElementById('screen-setup');
         const screenConference = document.getElementById('screen-conference');
         const screenSummary = document.getElementById('screen-summary');
-        
+
         const storeInput = document.getElementById('store-input');
         const datalist = document.getElementById('store-list');
         const recentStoresContainer = document.getElementById('recent-stores');
-        
+
         const btnStart = document.getElementById('btn-start');
         const btnEnd = document.getElementById('btn-end');
         const btnExport = document.getElementById('btn-export');
         const btnNew = document.getElementById('btn-new');
-        
+
         const displayTargetStore = document.getElementById('display-target-store');
         const barcodeInput = document.getElementById('barcode-input');
         const feedbackArea = document.getElementById('feedback-area');
@@ -191,16 +173,20 @@
         }
 
         function getRecentStores() {
-            const stores = localStorage.getItem('recentStores');
-            return stores ? JSON.parse(stores) : [];
+            try {
+                const stores = localStorage.getItem('recentStores');
+                return stores ? JSON.parse(stores) : [];
+            } catch (e) { return []; }
         }
 
         function saveRecentStore(store) {
-            let stores = getRecentStores();
-            stores = stores.filter(s => s !== store);
-            stores.unshift(store);
-            if(stores.length > 5) stores.pop();
-            localStorage.setItem('recentStores', JSON.stringify(stores));
+            try {
+                let stores = getRecentStores();
+                stores = stores.filter(s => s !== store);
+                stores.unshift(store);
+                if (stores.length > 5) stores.pop();
+                localStorage.setItem('recentStores', JSON.stringify(stores));
+            } catch (e) {}
         }
 
         function renderRecentStores() {
@@ -214,8 +200,8 @@
                 const btn = document.createElement('button');
                 btn.className = 'bg-gray-200 hover:bg-blue-100 text-gray-800 font-medium py-1.5 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm border border-gray-300 transition-colors shadow-sm whitespace-nowrap';
                 btn.innerText = store;
-                btn.onclick = () => { 
-                    storeInput.value = store; 
+                btn.onclick = () => {
+                    storeInput.value = store;
                     setupErrorMsg.classList.add('hidden');
                 };
                 recentStoresContainer.appendChild(btn);
@@ -223,13 +209,13 @@
         }
 
         async function setupAudio() {
-            if(!synthSuccess) {
+            if (!synthSuccess) {
                 await Tone.start();
                 synthSuccess = new Tone.PolySynth(Tone.Synth, {
                     oscillator: { type: "sine" },
                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 }
                 }).toDestination();
-                
+
                 synthError = new Tone.Synth({
                     oscillator: { type: "sawtooth" },
                     envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.4 }
@@ -237,64 +223,54 @@
             }
         }
 
-        function playSuccessAudio() {
-            if(synthSuccess) synthSuccess.triggerAttackRelease(["C6", "E6"], "0.15s");
-        }
-
-        function playErrorAudio() {
-            if(synthError) synthError.triggerAttackRelease("C2", "0.5s");
-        }
+        function playSuccessAudio() { if (synthSuccess) synthSuccess.triggerAttackRelease(["C6", "E6"], "0.15s"); }
+        function playErrorAudio() { if (synthError) synthError.triggerAttackRelease("C2", "0.5s"); }
 
         storeInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                btnStart.click();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); btnStart.click(); }
         });
 
         btnStart.onclick = async () => {
             const val = storeInput.value.trim();
-            if(!val) {
+            if (!val) {
                 setupErrorMsg.innerText = "Por favor, digite ou selecione uma loja.";
                 setupErrorMsg.classList.remove('hidden');
                 return;
             }
             setupErrorMsg.classList.add('hidden');
-            
+
             lojaAlvo = val;
             saveRecentStore(lojaAlvo);
-            
+
             await setupAudio();
-            
+
             historicoLeituras = [];
             contagemTotal = 0;
             contagemCorreta = 0;
             contagemErrada = 0;
             resetFeedbackUI();
-            
+
             displayTargetStore.innerText = lojaAlvo;
-            
+
             screenSetup.classList.add('hidden');
             screenConference.classList.remove('hidden');
-            
-            setTimeout(() => {
-                barcodeInput.focus();
-            }, 100);
+
+            setTimeout(() => { barcodeInput.focus(); }, 100);
         };
 
         let pressTimer;
         let progressInterval;
-        const holdDuration = 1500; 
+        const holdDuration = 1500;
 
         const startPress = (e) => {
-            if(e.type === 'touchstart') e.preventDefault(); 
+            if (e.type === 'touchstart') e.preventDefault();
             const spinner = document.getElementById('btn-end-spinner');
             const progress = document.getElementById('btn-end-progress');
             spinner.classList.remove('hidden');
-            
+
             let startTime = Date.now();
             progress.style.width = '0%';
-            
+
             progressInterval = setInterval(() => {
                 let elapsed = Date.now() - startTime;
                 let percent = Math.min((elapsed / holdDuration) * 100, 100);
@@ -310,21 +286,20 @@
         const cancelPress = () => {
             clearTimeout(pressTimer);
             clearInterval(progressInterval);
-            
+
             const spinner = document.getElementById('btn-end-spinner');
             const progress = document.getElementById('btn-end-progress');
-            
-            if(spinner) spinner.classList.add('hidden');
-            if(progress) progress.style.width = '0%';
-            
+
+            if (spinner) spinner.classList.add('hidden');
+            if (progress) progress.style.width = '0%';
+
             if (!screenConference.classList.contains('hidden')) {
                 barcodeInput.focus();
             }
         };
 
         btnEnd.addEventListener('mousedown', startPress);
-        btnEnd.addEventListener('touchstart', startPress, {passive: false});
-        
+        btnEnd.addEventListener('touchstart', startPress, { passive: false });
         btnEnd.addEventListener('mouseup', cancelPress);
         btnEnd.addEventListener('mouseleave', cancelPress);
         btnEnd.addEventListener('touchend', cancelPress);
@@ -334,7 +309,7 @@
             document.getElementById('summary-total').innerText = contagemTotal;
             document.getElementById('summary-correct').innerText = contagemCorreta;
             document.getElementById('summary-wrong').innerText = contagemErrada;
-            
+
             screenConference.classList.add('hidden');
             screenSummary.classList.remove('hidden');
         }
@@ -362,52 +337,40 @@
             if (e.key === 'Enter') {
                 e.preventDefault();
                 processarLeitura(barcodeInput.value);
-                barcodeInput.value = ''; 
+                barcodeInput.value = '';
             }
         });
 
         function extrairLojaDoCodigo(codigoCompleto) {
             codigoCompleto = codigoCompleto.trim();
-            
-            // Nova Regra Baseada nas Imagens Fornecidas:
-            // 1. O código da etiqueta tem exatos 20 caracteres.
-            // 2. A loja está localizada a partir da posição 9 (índice 8).
-            // 3. A loja ocupa exatamente 5 posições de tamanho.
-            // 4. Lojas de 4 dígitos possuem um '0' na frente (ex: 07022).
+
+            // Etiqueta de 20 caracteres: loja nas posições 9 a 13 (índice 8, 5 posições)
             if (codigoCompleto.length === 20) {
-                // Pega os 5 caracteres a partir do índice 8 (onde começa a loja)
                 let blocoLoja = codigoCompleto.substring(8, 13);
-                
-                // Converte para Int e volta para String para remover zeros à esquerda
-                // Exemplo: "07022" vira 7022, que vira "7022".
-                // Exemplo: "11458" vira 11458, que vira "11458".
-                let numeroLojaExtraido = parseInt(blocoLoja, 10).toString();
-                
-                return numeroLojaExtraido;
+                return parseInt(blocoLoja, 10).toString();
             }
 
-            // Fallback de Segurança: Se lerem outra coisa sem querer (Ex: Código curto, bipe manual)
-            // Mantemos a busca pela loja alvo ou na lista como garantia extra.
+            // Fallbacks para leituras fora do padrão
             if (codigoCompleto.includes(lojaAlvo)) return lojaAlvo;
-            
+
             for (let i = 0; i < lojasBase.length; i++) {
                 if (codigoCompleto.includes(lojasBase[i])) return lojasBase[i];
             }
-            
+
             const match = codigoCompleto.match(/\d{4,5}/);
             if (match) return match[0];
-            
+
             return "Inválida";
         }
 
         function processarLeitura(codigoLido) {
             if (!codigoLido) return;
-            
+
             contagemTotal++;
             const lojaLida = extrairLojaDoCodigo(codigoLido);
             const isCorreto = lojaLida === lojaAlvo;
             const timestamp = new Date().toLocaleString('pt-BR');
-            
+
             historicoLeituras.push({
                 dataHora: timestamp,
                 caixaLida: codigoLido,
@@ -427,15 +390,15 @@
 
         function exibirSucesso() {
             playSuccessAudio();
-            
+
             feedbackArea.className = "flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-75 bg-green-500 w-full overflow-hidden";
             statusText.innerText = "CAIXA CORRETA";
             statusText.className = "text-4xl sm:text-5xl font-black text-white text-center uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm108.25 138.29l-136 136a16 16 0 01-22.62 0l-58.34-58.34a16 16 0 0122.62-22.62l47 47 124.69-124.69a16 16 0 0122.65 22.65z"></path></svg>`;
             errorDetails.classList.add('hidden');
-            
+
             feedbackArea.classList.remove('flash-green', 'flash-red');
-            void feedbackArea.offsetWidth; 
+            void feedbackArea.offsetWidth;
             feedbackArea.classList.add('flash-green');
 
             clearTimeout(window.feedbackTimeout);
@@ -444,18 +407,18 @@
 
         function exibirErro(lojaErrada) {
             playErrorAudio();
-            
+
             feedbackArea.className = "flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-75 bg-red-600 w-full overflow-hidden";
             statusText.innerText = "ERRO DE ROTA!";
             statusText.className = "text-4xl sm:text-5xl font-black text-white text-center uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm86.63 272a16 16 0 11-22.63 22.63L256 278.63l-64 64a16 16 0 01-22.63-22.63l64-64-64-64a16 16 0 0122.63-22.63l64 64 64-64a16 16 0 0122.63 22.63l-64 64z"></path></svg>`;
-            
+
             wrongStoreRead.innerText = lojaErrada;
             errorDetails.classList.remove('hidden');
             errorDetails.classList.add('flex');
 
             feedbackArea.classList.remove('flash-green', 'flash-red');
-            void feedbackArea.offsetWidth; 
+            void feedbackArea.offsetWidth;
             feedbackArea.classList.add('flash-red');
 
             clearTimeout(window.feedbackTimeout);
@@ -471,49 +434,95 @@
             errorDetails.classList.remove('flex');
         }
 
-btnExport.onclick = () => {
-    if (historicoLeituras.length === 0) return;
+        // ===== EXPORTAÇÃO CSV: colunas separadas de certos e errados =====
+        btnExport.onclick = () => {
+            if (historicoLeituras.length === 0) return;
 
-    const certos = historicoLeituras.filter(r => r.status === 'CORRETO');
-    const errados = historicoLeituras.filter(r => r.status === 'ERRO');
+            const certos = historicoLeituras.filter(r => r.status === 'CORRETO');
+            const errados = historicoLeituras.filter(r => r.status === 'ERRO');
 
-    // ="..." força o Excel a tratar o bulto como texto (evita notação científica nos 20 dígitos)
-    const txt = (v) => `="${String(v).replace(/"/g, '""')}"`;
-    const sep = ';'; // separador padrão do Excel pt-BR
+            // ="..." força o Excel a tratar o bulto como texto
+            const txt = (v) => `="${String(v).replace(/"/g, '""')}"`;
+            const sep = ';';
 
-    let csv = '\uFEFF'; // BOM para acentuação correta
-    csv += ['Loja Alvo', 'Bultos Certos (Loja ' + lojaAlvo + ')', 'Bultos Errados', 'Loja Identificada no Errado'].join(sep) + '\n';
+            let csv = '\uFEFF';
+            csv += ['Loja Alvo', 'Bultos Certos (Loja ' + lojaAlvo + ')', 'Bultos Errados', 'Loja Identificada no Errado'].join(sep) + '\n';
 
-    const linhas = Math.max(certos.length, errados.length);
-    for (let i = 0; i < linhas; i++) {
-        const c = certos[i];
-        const e = errados[i];
-        csv += [
-            i === 0 ? txt(lojaAlvo) : '',
-            c ? txt(c.caixaLida) : '',
-            e ? txt(e.caixaLida) : '',
-            e ? txt(e.lojaIdentificada) : ''
-        ].join(sep) + '\n';
-    }
+            const linhas = Math.max(certos.length, errados.length);
+            for (let i = 0; i < linhas; i++) {
+                const c = certos[i];
+                const e = errados[i];
+                csv += [
+                    i === 0 ? txt(lojaAlvo) : '',
+                    c ? txt(c.caixaLida) : '',
+                    e ? txt(e.caixaLida) : '',
+                    e ? txt(e.lojaIdentificada) : ''
+                ].join(sep) + '\n';
+            }
 
-    // Totais ao final
-    csv += '\n';
-    csv += ['TOTAL', certos.length, errados.length, ''].join(sep) + '\n';
+            csv += '\n';
+            csv += ['TOTAL', certos.length, errados.length, ''].join(sep) + '\n';
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
 
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Relatorio_Conferencia_${lojaAlvo}_${new Date().getTime()}.csv`);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Relatorio_Conferencia_${lojaAlvo}_${new Date().getTime()}.csv`);
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-};
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        };
 
-        // Inicializa opções e caches na tela principal
+        // ===== ENVIO POR QR CODE (sem download/upload) =====
+        const TAM_LOTE = 25;
+        let qrLotes = [], qrIdx = 0, qrTimer = null;
+
+        function montarLotes() {
+            const codigos = historicoLeituras.map(r => r.caixaLida.trim());
+            const grupos = [];
+            for (let i = 0; i < codigos.length; i += TAM_LOTE) grupos.push(codigos.slice(i, i + TAM_LOTE));
+            return grupos.map((g, i) => `LV1|${i + 1}|${grupos.length}|${lojaAlvo}|${g.join(',')}`);
+        }
+
+        function desenharQR() {
+            const qr = qrcode(0, 'L');
+            qr.addData(qrLotes[qrIdx]);
+            qr.make();
+            document.getElementById('qr-box').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+            document.getElementById('qr-info').innerText = `Loja ${lojaAlvo} — QR ${qrIdx + 1} de ${qrLotes.length}`;
+        }
+
+        function qrIrPara(delta) {
+            qrIdx = (qrIdx + delta + qrLotes.length) % qrLotes.length;
+            desenharQR();
+        }
+
+        function qrAuto(ligar) {
+            clearInterval(qrTimer);
+            qrTimer = null;
+            document.getElementById('qr-auto').innerText = ligar ? 'Pausar' : 'Auto';
+            if (ligar) qrTimer = setInterval(() => qrIrPara(1), 2500);
+        }
+
+        document.getElementById('btn-qr').onclick = () => {
+            if (historicoLeituras.length === 0) return;
+            qrLotes = montarLotes();
+            qrIdx = 0;
+            document.getElementById('qr-modal').classList.remove('hidden');
+            desenharQR();
+            qrAuto(true);
+        };
+        document.getElementById('qr-prev').onclick = () => { qrAuto(false); qrIrPara(-1); };
+        document.getElementById('qr-next').onclick = () => { qrAuto(false); qrIrPara(1); };
+        document.getElementById('qr-auto').onclick = () => qrAuto(!qrTimer);
+        document.getElementById('qr-close').onclick = () => {
+            qrAuto(false);
+            document.getElementById('qr-modal').classList.add('hidden');
+        };
+
         initApp();
     </script>
 </body>
