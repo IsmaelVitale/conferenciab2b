@@ -19,21 +19,31 @@
 <body class="bg-gray-100 text-gray-800 font-sans h-[100dvh] w-full flex flex-col overflow-x-hidden overflow-y-auto">
 
     <div id="screen-setup" class="flex flex-col flex-1 p-4 max-w-md mx-auto w-full">
-        <header class="mb-6 mt-2 text-center">
+        <header class="mb-4 mt-2 text-center">
             <h1 class="text-2xl sm:text-3xl font-bold text-blue-900">Conferência de Doca</h1>
-            <p class="text-gray-500 mt-2 text-sm sm:text-base">Selecione ou digite a loja de destino</p>
+            <p class="text-gray-500 mt-1 text-sm sm:text-base">Escolha a região ou digite as lojas de destino</p>
         </header>
 
         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md flex-1 overflow-y-auto">
-            <label for="store-input" class="block text-sm font-medium text-gray-700 mb-2 whitespace-normal">Loja Alvo</label>
-            <input list="store-list" id="store-input" type="text" inputmode="numeric"
-                   class="w-full text-2xl sm:text-3xl p-3 sm:p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-center"
-                   placeholder="Ex: 7016">
-            <p id="setup-error-msg" class="text-red-500 font-medium text-center mt-3 text-sm hidden">Por favor, digite ou selecione uma loja.</p>
-            <datalist id="store-list"></datalist>
+            <div class="mb-4">
+                <label for="region-select" class="block text-sm font-bold text-gray-700 mb-1.5 whitespace-normal">1. Região (preenchimento automático)</label>
+                <select id="region-select"
+                        class="w-full text-lg sm:text-xl p-3 border-2 border-blue-300 rounded-lg bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all font-semibold text-blue-950">
+                    <option value="">-- Selecione uma região (opcional) --</option>
+                </select>
+            </div>
 
-            <div class="mt-6">
-                <h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-3">Lojas Recentes</h3>
+            <div>
+                <label for="store-input" class="block text-sm font-bold text-gray-700 mb-1.5 whitespace-normal">2. Loja(s) Alvo (separe por vírgula, espaço ou /)</label>
+                <input list="store-list" id="store-input" type="text" autocomplete="off"
+                       class="w-full text-xl sm:text-2xl p-3 sm:p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-center font-bold"
+                       placeholder="Ex: 7016 ou 7051/11655/7022">
+                <p id="setup-error-msg" class="text-red-500 font-medium text-center mt-2 text-sm hidden">Por favor, selecione uma região ou digite ao menos uma loja.</p>
+                <datalist id="store-list"></datalist>
+            </div>
+
+            <div class="mt-5">
+                <h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-2.5">Conferências Recentes</h3>
                 <div id="recent-stores" class="flex flex-wrap gap-2"></div>
             </div>
         </div>
@@ -46,8 +56,8 @@
     <div id="screen-conference" class="hidden flex flex-col h-full w-full">
         <header class="bg-blue-900 text-white p-3 sm:p-4 shadow-md flex flex-wrap justify-between items-center z-10 gap-2">
             <div class="flex-1 min-w-[50%]">
-                <span class="text-xs sm:text-sm opacity-80 block whitespace-normal break-words">Validando para loja:</span>
-                <span id="display-target-store" class="text-2xl sm:text-3xl font-bold tracking-wider break-words">---</span>
+                <span id="display-target-label" class="text-xs sm:text-sm opacity-80 block whitespace-normal break-words">Validando para loja:</span>
+                <span id="display-target-store" class="text-xl sm:text-2xl font-bold tracking-wide break-words leading-tight block">---</span>
             </div>
 
             <button id="btn-end" class="relative bg-red-500 hover:bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-bold shadow overflow-hidden flex items-center gap-2 select-none touch-none flex-shrink-0 text-sm sm:text-base">
@@ -67,6 +77,10 @@
                 </div>
                 <h2 id="status-text" class="text-2xl sm:text-3xl font-bold text-gray-400 uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2">Aguardando Leitura</h2>
 
+                <div id="success-details" class="hidden flex-col items-center mt-1 w-full">
+                    <span id="matched-store-badge" class="text-white text-xl sm:text-2xl font-extrabold bg-black bg-opacity-30 px-4 py-1.5 rounded-full"></span>
+                </div>
+
                 <div id="error-details" class="hidden flex-col items-center mt-2 sm:mt-4 w-full">
                     <span class="text-white text-base sm:text-lg font-bold bg-black bg-opacity-50 px-3 sm:px-4 py-1 rounded-full mb-1 whitespace-normal break-words text-center max-w-full">Loja lida na caixa:</span>
                     <span id="wrong-store-read" class="text-5xl sm:text-6xl font-black text-white drop-shadow-md break-all text-center">---</span>
@@ -82,7 +96,8 @@
     </div>
 
     <div id="screen-summary" class="hidden flex flex-col flex-1 p-4 max-w-md mx-auto w-full justify-center overflow-y-auto">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-6 whitespace-normal break-words">Resumo da Conferência</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-2 whitespace-normal break-words">Resumo da Conferência</h2>
+        <p id="summary-target-info" class="text-center text-sm font-semibold text-blue-800 mb-5 break-words"></p>
 
         <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
             <div class="col-span-2 bg-blue-100 p-4 sm:p-6 rounded-xl text-center shadow">
@@ -114,7 +129,7 @@
     </div>
 
     <div id="qr-modal" class="hidden fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-4">
-        <p id="qr-info" class="font-bold text-lg mb-2 text-center"></p>
+        <p id="qr-info" class="font-bold text-lg mb-2 text-center px-2"></p>
         <div id="qr-box" class="bg-white"></div>
         <div class="flex gap-2 mt-4 w-full max-w-xs">
             <button id="qr-prev" class="flex-1 bg-gray-300 py-3 rounded-lg font-bold">◀</button>
@@ -125,14 +140,27 @@
     </div>
 
     <script>
-        const lojasBase = [
+        const REGIOES_LOJAS = {
+            "RIO DE JANEIRO": ["7051", "11655", "7022", "7018", "7038", "1949", "12964"],
+            "BRASILIA": ["1675", "7058", "7039", "7024"],
+            "BELEM": ["10277", "7059"],
+            "PORTO ALEGRE": ["7032", "5659", "17247"],
+            "FLORIANOPOLIS": ["7045"],
+            "BAUNEARIO": ["6937", "17259"],
+            "NORDESTE": ["5656", "5665", "7043", "6483", "7068", "7033"],
+            "CURITIBA": ["7021", "7040", "1694", "7076"]
+        };
+
+        const lojasBase = Array.from(new Set([
             "7016", "7021", "7022", "7024", "7025", "7026", "7027", "7030", "7037", "7040",
             "7042", "7044", "7049", "7050", "7052", "7056", "7060", "7061",
             "7071", "7076", "7077", "7100", "10347", "11458", "12641",
-            "16279", "16787", "17261", "7019", "7104", "17262", "17247", "17523"
-        ];
+            "16279", "16787", "17261", "7019", "7104", "17262", "17247", "17523",
+            ...Object.values(REGIOES_LOJAS).flat()
+        ]));
 
-        let lojaAlvo = "";
+        let lojasAlvo = [];
+        let regiaoAtiva = "";
         let historicoLeituras = [];
         let contagemTotal = 0;
         let contagemCorreta = 0;
@@ -145,6 +173,7 @@
         const screenConference = document.getElementById('screen-conference');
         const screenSummary = document.getElementById('screen-summary');
 
+        const regionSelect = document.getElementById('region-select');
         const storeInput = document.getElementById('store-input');
         const datalist = document.getElementById('store-list');
         const recentStoresContainer = document.getElementById('recent-stores');
@@ -154,38 +183,102 @@
         const btnExport = document.getElementById('btn-export');
         const btnNew = document.getElementById('btn-new');
 
+        const displayTargetLabel = document.getElementById('display-target-label');
         const displayTargetStore = document.getElementById('display-target-store');
         const barcodeInput = document.getElementById('barcode-input');
         const feedbackArea = document.getElementById('feedback-area');
         const statusIcon = document.getElementById('status-icon');
         const statusText = document.getElementById('status-text');
+        const successDetails = document.getElementById('success-details');
+        const matchedStoreBadge = document.getElementById('matched-store-badge');
         const errorDetails = document.getElementById('error-details');
         const wrongStoreRead = document.getElementById('wrong-store-read');
         const setupErrorMsg = document.getElementById('setup-error-msg');
 
+        function parsearLojas(texto) {
+            const partes = String(texto || '')
+                .split(/[\s,\/;|]+/)
+                .map(s => s.trim())
+                .filter(Boolean);
+            const unicas = [];
+            partes.forEach(p => {
+                const normalizada = /^\d+$/.test(p) ? String(parseInt(p, 10)) : p;
+                if (!unicas.includes(normalizada)) {
+                    unicas.push(normalizada);
+                }
+            });
+            return unicas;
+        }
+
+        function identificarRegiaoPorLojas(lista) {
+            if (!lista || lista.length === 0) return "";
+            const setLista = new Set(lista);
+            for (const [regiao, lojasRegiao] of Object.entries(REGIOES_LOJAS)) {
+                if (lojasRegiao.length === setLista.size && lojasRegiao.every(l => setLista.has(l))) {
+                    return regiao;
+                }
+            }
+            return "";
+        }
+
+        function obterTituloConferencia() {
+            if (regiaoAtiva) {
+                return `${regiaoAtiva} (${lojasAlvo.join('/')})`;
+            }
+            if (lojasAlvo.length === 1) {
+                return `Loja ${lojasAlvo[0]}`;
+            }
+            return `Lojas ${lojasAlvo.join('/')}`;
+        }
+
         function initApp() {
+            Object.keys(REGIOES_LOJAS).forEach(regiao => {
+                const opt = document.createElement('option');
+                opt.value = regiao;
+                opt.textContent = `${regiao} (${REGIOES_LOJAS[regiao].join('/')})`;
+                regionSelect.appendChild(opt);
+            });
+
             lojasBase.forEach(loja => {
                 const option = document.createElement('option');
                 option.value = loja;
                 datalist.appendChild(option);
             });
+
+            regionSelect.addEventListener('change', () => {
+                const reg = regionSelect.value;
+                setupErrorMsg.classList.add('hidden');
+                if (reg && REGIOES_LOJAS[reg]) {
+                    storeInput.value = REGIOES_LOJAS[reg].join('/');
+                } else {
+                    storeInput.value = '';
+                }
+            });
+
+            storeInput.addEventListener('input', () => {
+                setupErrorMsg.classList.add('hidden');
+                const digitadas = parsearLojas(storeInput.value);
+                const regMatch = identificarRegiaoPorLojas(digitadas);
+                regionSelect.value = regMatch || "";
+            });
+
             renderRecentStores();
         }
 
         function getRecentStores() {
             try {
-                const stores = localStorage.getItem('recentStores');
+                const stores = localStorage.getItem('recentStoresV2');
                 return stores ? JSON.parse(stores) : [];
             } catch (e) { return []; }
         }
 
-        function saveRecentStore(store) {
+        function saveRecentStore(entry) {
             try {
                 let stores = getRecentStores();
-                stores = stores.filter(s => s !== store);
-                stores.unshift(store);
-                if (stores.length > 5) stores.pop();
-                localStorage.setItem('recentStores', JSON.stringify(stores));
+                stores = stores.filter(s => s.raw !== entry.raw);
+                stores.unshift(entry);
+                if (stores.length > 6) stores.pop();
+                localStorage.setItem('recentStoresV2', JSON.stringify(stores));
             } catch (e) {}
         }
 
@@ -193,15 +286,17 @@
             const stores = getRecentStores();
             recentStoresContainer.innerHTML = '';
             if (stores.length === 0) {
-                recentStoresContainer.innerHTML = '<span class="text-sm text-gray-400">Nenhuma loja recente.</span>';
+                recentStoresContainer.innerHTML = '<span class="text-sm text-gray-400">Nenhuma conferência recente.</span>';
                 return;
             }
-            stores.forEach(store => {
+            stores.forEach(item => {
                 const btn = document.createElement('button');
-                btn.className = 'bg-gray-200 hover:bg-blue-100 text-gray-800 font-medium py-1.5 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm border border-gray-300 transition-colors shadow-sm whitespace-nowrap';
-                btn.innerText = store;
+                btn.type = 'button';
+                btn.className = 'bg-gray-200 hover:bg-blue-100 text-gray-800 font-medium py-1.5 px-3 sm:py-2 sm:px-4 rounded-full text-xs sm:text-sm border border-gray-300 transition-colors shadow-sm max-w-full truncate';
+                btn.innerText = item.label;
                 btn.onclick = () => {
-                    storeInput.value = store;
+                    storeInput.value = item.raw;
+                    regionSelect.value = item.regiao || "";
                     setupErrorMsg.classList.add('hidden');
                 };
                 recentStoresContainer.appendChild(btn);
@@ -231,16 +326,21 @@
         });
 
         btnStart.onclick = async () => {
-            const val = storeInput.value.trim();
-            if (!val) {
-                setupErrorMsg.innerText = "Por favor, digite ou selecione uma loja.";
+            const lista = parsearLojas(storeInput.value);
+            if (lista.length === 0) {
+                setupErrorMsg.innerText = "Por favor, selecione uma região ou digite ao menos uma loja.";
                 setupErrorMsg.classList.remove('hidden');
                 return;
             }
             setupErrorMsg.classList.add('hidden');
 
-            lojaAlvo = val;
-            saveRecentStore(lojaAlvo);
+            lojasAlvo = lista;
+            const regDetectada = identificarRegiaoPorLojas(lojasAlvo);
+            regiaoAtiva = regionSelect.value || regDetectada || "";
+
+            const rawVal = lojasAlvo.join('/');
+            const recentLabel = regiaoAtiva ? `${regiaoAtiva} (${lojasAlvo.length} lojas)` : rawVal;
+            saveRecentStore({ raw: rawVal, label: recentLabel, regiao: regiaoAtiva });
 
             await setupAudio();
 
@@ -250,7 +350,16 @@
             contagemErrada = 0;
             resetFeedbackUI();
 
-            displayTargetStore.innerText = lojaAlvo;
+            if (regiaoAtiva) {
+                displayTargetLabel.innerText = `Região: ${regiaoAtiva}`;
+                displayTargetStore.innerText = lojasAlvo.join(' / ');
+            } else if (lojasAlvo.length > 1) {
+                displayTargetLabel.innerText = `Validando ${lojasAlvo.length} lojas:`;
+                displayTargetStore.innerText = lojasAlvo.join(' / ');
+            } else {
+                displayTargetLabel.innerText = "Validando para loja:";
+                displayTargetStore.innerText = lojasAlvo[0];
+            }
 
             screenSetup.classList.add('hidden');
             screenConference.classList.remove('hidden');
@@ -306,6 +415,7 @@
 
         function finishConference() {
             cancelPress();
+            document.getElementById('summary-target-info').innerText = obterTituloConferencia();
             document.getElementById('summary-total').innerText = contagemTotal;
             document.getElementById('summary-correct').innerText = contagemCorreta;
             document.getElementById('summary-wrong').innerText = contagemErrada;
@@ -315,6 +425,7 @@
         }
 
         btnNew.onclick = () => {
+            regionSelect.value = '';
             storeInput.value = '';
             renderRecentStores();
             screenSummary.classList.add('hidden');
@@ -344,21 +455,21 @@
         function extrairLojaDoCodigo(codigoCompleto) {
             codigoCompleto = codigoCompleto.trim();
 
-            // Etiqueta de 20 caracteres: loja nas posições 9 a 13 (índice 8, 5 posições)
             if (codigoCompleto.length === 20) {
                 let blocoLoja = codigoCompleto.substring(8, 13);
                 return parseInt(blocoLoja, 10).toString();
             }
 
-            // Fallbacks para leituras fora do padrão
-            if (codigoCompleto.includes(lojaAlvo)) return lojaAlvo;
+            for (let i = 0; i < lojasAlvo.length; i++) {
+                if (codigoCompleto.includes(lojasAlvo[i])) return lojasAlvo[i];
+            }
 
             for (let i = 0; i < lojasBase.length; i++) {
                 if (codigoCompleto.includes(lojasBase[i])) return lojasBase[i];
             }
 
             const match = codigoCompleto.match(/\d{4,5}/);
-            if (match) return match[0];
+            if (match) return String(parseInt(match[0], 10));
 
             return "Inválida";
         }
@@ -368,27 +479,27 @@
 
             contagemTotal++;
             const lojaLida = extrairLojaDoCodigo(codigoLido);
-            const isCorreto = lojaLida === lojaAlvo;
+            const isCorreto = lojasAlvo.includes(lojaLida);
             const timestamp = new Date().toLocaleString('pt-BR');
 
             historicoLeituras.push({
                 dataHora: timestamp,
                 caixaLida: codigoLido,
-                lojaAlvo: lojaAlvo,
+                lojasAlvo: [...lojasAlvo],
                 lojaIdentificada: lojaLida,
                 status: isCorreto ? 'CORRETO' : 'ERRO'
             });
 
             if (isCorreto) {
                 contagemCorreta++;
-                exibirSucesso();
+                exibirSucesso(lojaLida);
             } else {
                 contagemErrada++;
                 exibirErro(lojaLida);
             }
         }
 
-        function exibirSucesso() {
+        function exibirSucesso(lojaLida) {
             playSuccessAudio();
 
             feedbackArea.className = "flex-1 flex flex-col items-center justify-between p-4 transition-colors duration-75 bg-green-500 w-full overflow-hidden";
@@ -396,6 +507,16 @@
             statusText.className = "text-4xl sm:text-5xl font-black text-white text-center uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm108.25 138.29l-136 136a16 16 0 01-22.62 0l-58.34-58.34a16 16 0 0122.62-22.62l47 47 124.69-124.69a16 16 0 0122.65 22.65z"></path></svg>`;
             errorDetails.classList.add('hidden');
+            errorDetails.classList.remove('flex');
+
+            if (lojasAlvo.length > 1) {
+                matchedStoreBadge.innerText = `Loja ${lojaLida}`;
+                successDetails.classList.remove('hidden');
+                successDetails.classList.add('flex');
+            } else {
+                successDetails.classList.add('hidden');
+                successDetails.classList.remove('flex');
+            }
 
             feedbackArea.classList.remove('flash-green', 'flash-red');
             void feedbackArea.offsetWidth;
@@ -412,6 +533,9 @@
             statusText.innerText = "ERRO DE ROTA!";
             statusText.className = "text-4xl sm:text-5xl font-black text-white text-center uppercase tracking-widest mb-2 whitespace-normal break-words w-full px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="white" stroke-width="0" viewBox="0 0 512 512" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm86.63 272a16 16 0 11-22.63 22.63L256 278.63l-64 64a16 16 0 01-22.63-22.63l64-64-64-64a16 16 0 0122.63-22.63l64 64 64-64a16 16 0 0122.63 22.63l-64 64z"></path></svg>`;
+
+            successDetails.classList.add('hidden');
+            successDetails.classList.remove('flex');
 
             wrongStoreRead.innerText = lojaErrada;
             errorDetails.classList.remove('hidden');
@@ -430,45 +554,92 @@
             statusText.innerText = "Aguardando Leitura";
             statusText.className = "text-2xl sm:text-3xl font-bold text-gray-400 uppercase tracking-widest mb-2 whitespace-normal break-words w-full text-center px-2";
             statusIcon.innerHTML = `<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" height="1.5em" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>`;
+            successDetails.classList.add('hidden');
+            successDetails.classList.remove('flex');
             errorDetails.classList.add('hidden');
             errorDetails.classList.remove('flex');
         }
 
-        // ===== EXPORTAÇÃO CSV: colunas separadas de certos e errados =====
+        // ===== EXPORTAÇÃO CSV: suporta 1 coluna ou múltiplas colunas por loja alvo =====
         btnExport.onclick = () => {
             if (historicoLeituras.length === 0) return;
 
-            const certos = historicoLeituras.filter(r => r.status === 'CORRETO');
-            const errados = historicoLeituras.filter(r => r.status === 'ERRO');
-
-            // ="..." força o Excel a tratar o bulto como texto
             const txt = (v) => `="${String(v).replace(/"/g, '""')}"`;
             const sep = ';';
-
             let csv = '\uFEFF';
-            csv += ['Loja Alvo', 'Bultos Certos (Loja ' + lojaAlvo + ')', 'Bultos Errados', 'Loja Identificada no Errado'].join(sep) + '\n';
 
-            const linhas = Math.max(certos.length, errados.length);
-            for (let i = 0; i < linhas; i++) {
-                const c = certos[i];
-                const e = errados[i];
-                csv += [
-                    i === 0 ? txt(lojaAlvo) : '',
-                    c ? txt(c.caixaLida) : '',
-                    e ? txt(e.caixaLida) : '',
-                    e ? txt(e.lojaIdentificada) : ''
-                ].join(sep) + '\n';
+            if (lojasAlvo.length === 1) {
+                const lojaUnica = lojasAlvo[0];
+                const certos = historicoLeituras.filter(r => r.status === 'CORRETO');
+                const errados = historicoLeituras.filter(r => r.status === 'ERRO');
+
+                csv += ['Loja Alvo', 'Bultos Certos (Loja ' + lojaUnica + ')', 'Bultos Errados', 'Loja Identificada no Errado'].join(sep) + '\n';
+
+                const linhas = Math.max(certos.length, errados.length);
+                for (let i = 0; i < linhas; i++) {
+                    const c = certos[i];
+                    const e = errados[i];
+                    csv += [
+                        i === 0 ? txt(lojaUnica) : '',
+                        c ? txt(c.caixaLida) : '',
+                        e ? txt(e.caixaLida) : '',
+                        e ? txt(e.lojaIdentificada) : ''
+                    ].join(sep) + '\n';
+                }
+
+                csv += '\n';
+                csv += ['TOTAL', certos.length, errados.length, ''].join(sep) + '\n';
+            } else {
+                const certosPorLoja = {};
+                lojasAlvo.forEach(l => {
+                    certosPorLoja[l] = historicoLeituras.filter(r => r.status === 'CORRETO' && r.lojaIdentificada === l);
+                });
+                const errados = historicoLeituras.filter(r => r.status === 'ERRO');
+
+                const cabecalho = [
+                    regiaoAtiva ? 'Região / Grupo' : 'Lojas Alvo',
+                    ...lojasAlvo.map(l => 'Certos Loja ' + l),
+                    'Bultos Errados',
+                    'Loja Identificada no Errado'
+                ];
+                csv += cabecalho.join(sep) + '\n';
+
+                const maxLinhas = Math.max(
+                    errados.length,
+                    ...lojasAlvo.map(l => certosPorLoja[l].length)
+                );
+
+                for (let i = 0; i < maxLinhas; i++) {
+                    const e = errados[i];
+                    const row = [
+                        i === 0 ? txt(obterTituloConferencia()) : '',
+                        ...lojasAlvo.map(l => certosPorLoja[l][i] ? txt(certosPorLoja[l][i].caixaLida) : ''),
+                        e ? txt(e.caixaLida) : '',
+                        e ? txt(e.lojaIdentificada) : ''
+                    ];
+                    csv += row.join(sep) + '\n';
+                }
+
+                csv += '\n';
+                const linhaTotal = [
+                    'TOTAL',
+                    ...lojasAlvo.map(l => certosPorLoja[l].length),
+                    errados.length,
+                    ''
+                ];
+                csv += linhaTotal.join(sep) + '\n';
             }
-
-            csv += '\n';
-            csv += ['TOTAL', certos.length, errados.length, ''].join(sep) + '\n';
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
 
+            const nomeArquivoBase = regiaoAtiva
+                ? regiaoAtiva.replace(/\s+/g, '_')
+                : lojasAlvo.join('_');
+
             const link = document.createElement('a');
             link.setAttribute('href', url);
-            link.setAttribute('download', `Relatorio_Conferencia_${lojaAlvo}_${new Date().getTime()}.csv`);
+            link.setAttribute('download', `Relatorio_Conferencia_${nomeArquivoBase}_${new Date().getTime()}.csv`);
 
             document.body.appendChild(link);
             link.click();
@@ -476,7 +647,7 @@
             URL.revokeObjectURL(url);
         };
 
-        // ===== ENVIO POR QR CODE (sem download/upload) =====
+        // ===== ENVIO POR QR CODE (Protocolo LV2 com suporte a 1 ou múltiplas lojas) =====
         const TAM_LOTE = 25;
         let qrLotes = [], qrIdx = 0, qrTimer = null;
 
@@ -484,7 +655,8 @@
             const codigos = historicoLeituras.map(r => r.caixaLida.trim());
             const grupos = [];
             for (let i = 0; i < codigos.length; i += TAM_LOTE) grupos.push(codigos.slice(i, i + TAM_LOTE));
-            return grupos.map((g, i) => `LV1|${i + 1}|${grupos.length}|${lojaAlvo}|${g.join(',')}`);
+            const blocoLojas = lojasAlvo.join('|');
+            return grupos.map((g, i) => `LV2|${i + 1}|${grupos.length}|L|${blocoLojas}|B|${g.join(',')}`);
         }
 
         function desenharQR() {
@@ -492,7 +664,7 @@
             qr.addData(qrLotes[qrIdx]);
             qr.make();
             document.getElementById('qr-box').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
-            document.getElementById('qr-info').innerText = `Loja ${lojaAlvo} — QR ${qrIdx + 1} de ${qrLotes.length}`;
+            document.getElementById('qr-info').innerText = `${obterTituloConferencia()} — QR ${qrIdx + 1} de ${qrLotes.length}`;
         }
 
         function qrIrPara(delta) {
