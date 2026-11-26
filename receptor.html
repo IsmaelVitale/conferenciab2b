@@ -26,20 +26,22 @@ header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px}
 .menu .pop button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 10px;border-radius:6px}
 .menu .pop button:hover{background:#eef3ff}
 .layout{flex:1;display:flex;min-height:0}
-aside{width:260px;background:#fff;border-right:1px solid var(--line);padding:12px;overflow:auto}
+aside{width:280px;background:#fff;border-right:1px solid var(--line);padding:12px;overflow:auto}
 aside h4{margin:16px 6px 6px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
-.nav{display:flex;justify-content:space-between;align-items:center;width:100%;padding:10px 12px;margin-bottom:3px;background:none;border:0;border-radius:8px;text-align:left;color:var(--ink)}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:10px 12px;margin-bottom:3px;background:none;border:0;border-radius:8px;text-align:left;color:var(--ink)}
 .nav:hover{background:#f0f4fb}
 .nav.on{background:#e6eeff;color:var(--pri);font-weight:600}
-.nav span{display:flex;gap:4px}
+.nav .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav span{display:flex;gap:4px;flex-shrink:0}
 .nav i{font-style:normal;font-size:12px;min-width:26px;text-align:center;padding:2px 6px;border-radius:99px;font-weight:600}
 i.ok{background:var(--okbg);color:var(--ok)}
 i.er{background:var(--erbg);color:var(--er)}
 i.zero{background:#eef0f4;color:#9aa3b2}
 main{flex:1;overflow:auto;padding:22px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:980px;margin:0 auto 16px;box-shadow:0 1px 3px #0000000a}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:1180px;margin:0 auto 16px;box-shadow:0 1px 3px #0000000a}
 .card h2{margin:0 0 4px;font-size:22px}
 .card h2 small{font-size:14px;color:var(--mut);font-weight:400;margin-left:8px}
+.substores{font-size:13px;color:var(--pri);font-weight:600;margin-top:2px;word-break:break-word}
 .mut{color:var(--mut);font-size:14px}
 .big{width:100%;font-size:20px;padding:16px;border:2px solid #c9d6f5;border-radius:12px;margin:16px 0 12px;outline:none}
 .big:focus{border-color:var(--pri);box-shadow:0 0 0 4px #2457d622}
@@ -49,20 +51,21 @@ main{flex:1;overflow:auto;padding:22px}
 .btn.sec{background:#e9eefb;color:var(--pri)}
 .btn.red{background:var(--er)}
 .btn.sm{padding:6px 10px;font-size:13px}
-video{width:100%;max-width:420px;margin-top:14px;border-radius:10px;background:#000;display:block}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-.chips{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}
+.chips{display:flex;gap:10px;margin:16px 0 10px;flex-wrap:wrap}
 .chip{padding:10px 16px;border-radius:10px;font-size:13px;color:var(--mut);background:#f3f5fa}
 .chip b{display:block;font-size:26px;color:var(--ink)}
 .chip.ok{background:var(--okbg)}.chip.ok b{color:var(--ok)}
 .chip.er{background:var(--erbg)}.chip.er b{color:var(--er)}
+.storepills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pill{background:#eef3ff;color:var(--pri);border:1px solid #d5e2ff;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600}
 .copybar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .copybar label{font-size:13px;color:var(--mut);display:flex;gap:4px;align-items:center}
 .env{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:14px}
-.scroll{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
 table{border-collapse:collapse;width:100%;font-size:14px}
-th{position:sticky;top:0;text-align:left;padding:9px 12px;background:#f3f5fa;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
-td{padding:7px 12px;border-top:1px solid var(--line);font-family:Consolas,monospace}
+th{position:sticky;top:0;text-align:left;padding:9px 12px;background:#f3f5fa;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);white-space:nowrap}
+td{padding:7px 12px;border-top:1px solid var(--line);font-family:Consolas,monospace;white-space:nowrap}
 td.c{color:var(--ok)}td.e{color:var(--er)}
 h3{margin:18px 0 8px;font-size:15px}
 #modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:50}
@@ -123,9 +126,21 @@ h3{margin:18px 0 8px;font-size:15px}
 <script>
 const $ = s => document.querySelector(s);
 const KEY = 'receptor_db_v1';
+
+const REGIOES_LOJAS = {
+  "RIO DE JANEIRO": ["7051", "11655", "7022", "7018", "7038", "1949", "12964"],
+  "BRASILIA": ["1675", "7058", "7039", "7024"],
+  "BELEM": ["10277", "7059"],
+  "PORTO ALEGRE": ["7032", "5659", "17247"],
+  "FLORIANOPOLIS": ["7045"],
+  "BAUNEARIO": ["6937", "17259"],
+  "NORDESTE": ["5656", "5665", "7043", "6483", "7068", "7033"],
+  "CURITIBA": ["7021", "7040", "1694", "7076"]
+};
+
 let db = { envios: [] }, fh = null;
-let view = 'home', lojaSel = null, dataSel = hoje();
-let pend = null, bloqueio = 0, stream = null, camOn = false;
+let view = 'home', grupoSel = null, dataSel = hoje();
+let pend = null;
 
 function hoje() {
   const d = new Date();
@@ -134,7 +149,10 @@ function hoje() {
 function fmtData(s) { const [y, m, d] = s.split('-'); return `${d}/${m}/${y}`; }
 function extrairLoja(c) {
   c = c.trim();
-  if (c.length === 20) { const n = parseInt(c.substring(8, 13), 10); return isNaN(n) ? 'Inválida' : String(n); }
+  if (c.length === 20) {
+    const n = parseInt(c.substring(8, 13), 10);
+    return isNaN(n) ? 'Inválida' : String(n);
+  }
   return 'Inválida';
 }
 function toast(t) {
@@ -143,9 +161,44 @@ function toast(t) {
 }
 function status(t, ok) { const s = $('#stat'); s.textContent = '💾 ' + t; s.className = ok ? '' : 'bad'; }
 
+function normalizarLojasEnvio(e) {
+  if (Array.isArray(e.lojas) && e.lojas.length > 0) return e.lojas.map(String);
+  if (e.loja) return String(e.loja).split('/').map(s => s.trim()).filter(Boolean);
+  return [];
+}
+
+function chaveGrupo(lojas) {
+  return lojas.join('/');
+}
+
+function identificarRegiao(lojas) {
+  if (!lojas || lojas.length === 0) return '';
+  const setLojas = new Set(lojas);
+  for (const [regiao, lista] of Object.entries(REGIOES_LOJAS)) {
+    if (lista.length === setLojas.size && lista.every(l => setLojas.has(l))) {
+      return regiao;
+    }
+  }
+  return '';
+}
+
+function tituloGrupo(lojas, curto = false) {
+  const regiao = identificarRegiao(lojas);
+  if (regiao) {
+    return curto ? regiao : `${regiao}`;
+  }
+  if (lojas.length === 1) {
+    return `Loja ${lojas[0]}`;
+  }
+  return curto ? `Lojas (${lojas.length})` : `Lojas ${lojas.join(' / ')}`;
+}
+
 // ---------- Persistência ----------
 function carregar() {
-  try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.envios)) db = o; } catch (e) {}
+  try {
+    const o = JSON.parse(localStorage.getItem(KEY));
+    if (o && Array.isArray(o.envios)) db = o;
+  } catch (e) {}
 }
 async function salvar() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
@@ -159,7 +212,13 @@ async function salvar() {
 }
 function mesclar(o) {
   const ids = new Set(db.envios.map(e => e.id)); let n = 0;
-  (o.envios || []).forEach(e => { if (e && e.id && e.loja && e.data && Array.isArray(e.bultos) && !ids.has(e.id)) { db.envios.push(e); n++; } });
+  (o.envios || []).forEach(e => {
+    const lojas = normalizarLojasEnvio(e);
+    if (e && e.id && lojas.length > 0 && e.data && Array.isArray(e.bultos) && !ids.has(e.id)) {
+      db.envios.push({ ...e, loja: chaveGrupo(lojas), lojas });
+      n++;
+    }
+  });
   return n;
 }
 const FT = [{ description: 'JSON', accept: { 'application/json': ['.json'] } }];
@@ -191,19 +250,42 @@ async function importar(inp) {
 }
 
 // ---------- Dados ----------
-function dadosLoja(loja, data) {
-  const es = db.envios.filter(e => e.loja === loja && e.data === data);
+function dadosGrupo(chave, data) {
+  const es = db.envios.filter(e => chaveGrupo(normalizarLojasEnvio(e)) === chave && e.data === data);
+  const lojas = es.length ? normalizarLojasEnvio(es[0]) : chave.split('/').filter(Boolean);
   const u = [...new Set(es.flatMap(e => e.bultos))];
-  return { es, certos: u.filter(c => extrairLoja(c) === loja), errados: u.filter(c => extrairLoja(c) !== loja) };
+  const certosPorLoja = {};
+  lojas.forEach(l => { certosPorLoja[l] = []; });
+  const certos = [];
+  const errados = [];
+
+  u.forEach(c => {
+    const l = extrairLoja(c);
+    if (lojas.includes(l)) {
+      certos.push(c);
+      certosPorLoja[l].push(c);
+    } else {
+      errados.push(c);
+    }
+  });
+
+  return { es, lojas, certos, certosPorLoja, errados };
 }
-function lojasDoDia() {
-  return [...new Set(db.envios.filter(e => e.data === dataSel).map(e => e.loja))].sort((a, b) => Number(a) - Number(b));
+
+function gruposDoDia() {
+  const mapa = new Map();
+  db.envios.filter(e => e.data === dataSel).forEach(e => {
+    const lojas = normalizarLojasEnvio(e);
+    const chave = chaveGrupo(lojas);
+    if (!mapa.has(chave)) mapa.set(chave, lojas);
+  });
+  return Array.from(mapa.entries()).map(([chave, lojas]) => ({ chave, lojas }));
 }
 
 // ---------- Data ----------
 function setData(v) {
   dataSel = v || hoje(); $('#dt').value = dataSel;
-  if (view === 'loja' && !dadosLoja(lojaSel, dataSel).es.length) view = 'resumo';
+  if (view === 'loja' && !dadosGrupo(grupoSel, dataSel).es.length) view = 'resumo';
   render();
 }
 function mudaDia(n) {
@@ -213,26 +295,33 @@ function mudaDia(n) {
 
 // ---------- Navegação ----------
 function irHome() { view = 'home'; render(); }
-function irResumo() { desligarCam(); view = 'resumo'; render(); }
-function irLoja(l) { desligarCam(); view = 'loja'; lojaSel = l; render(); }
+function irResumo() { view = 'resumo'; render(); }
+function irGrupo(chave) { view = 'loja'; grupoSel = chave; render(); }
+
 function render() {
   const [y, m, d] = dataSel.split('-').map(Number);
   $('#dt').value = dataSel;
   $('#wd').textContent = new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long' });
   renderSide();
-  if (view === 'home') renderHome(); else if (view === 'resumo') renderResumo(); else renderLoja();
+  if (view === 'home') renderHome();
+  else if (view === 'resumo') renderResumo();
+  else renderLoja();
 }
+
 function renderSide() {
-  const ls = lojasDoDia();
+  const gs = gruposDoDia();
   $('#side').innerHTML =
     `<button class="nav ${view === 'home' ? 'on' : ''}" onclick="irHome()">📷 Bipar QR codes</button>
      <button class="nav ${view === 'resumo' ? 'on' : ''}" onclick="irResumo()">📋 Resumo do dia</button>
-     <h4>Lojas · ${fmtData(dataSel)} (${ls.length})</h4>` +
-    (ls.length ? ls.map(l => {
-      const d = dadosLoja(l, dataSel);
-      return `<button class="nav ${view === 'loja' && lojaSel === l ? 'on' : ''}" onclick="irLoja('${l}')"><b>Loja ${l}</b>
-        <span><i class="ok">${d.certos.length}</i><i class="${d.errados.length ? 'er' : 'zero'}">${d.errados.length}</i></span></button>`;
-    }).join('') : '<p class="mut" style="padding:0 6px">Nenhuma loja nesta data.</p>');
+     <h4>Conferências · ${fmtData(dataSel)} (${gs.length})</h4>` +
+    (gs.length ? gs.map(g => {
+      const d = dadosGrupo(g.chave, dataSel);
+      const label = tituloGrupo(g.lojas, true);
+      return `<button class="nav ${view === 'loja' && grupoSel === g.chave ? 'on' : ''}" onclick="irGrupo('${esc(g.chave)}')" title="${esc(g.lojas.join(' / '))}">
+        <b class="lbl">${esc(label)}</b>
+        <span><i class="ok">${d.certos.length}</i><i class="${d.errados.length ? 'er' : 'zero'}">${d.errados.length}</i></span>
+      </button>`;
+    }).join('') : '<p class="mut" style="padding:0 6px">Nenhuma conferência nesta data.</p>');
 }
 
 // ---------- Tela: Bipar ----------
@@ -245,37 +334,65 @@ function renderHome() {
   $('#scan').addEventListener('keydown', e => { if (e.key === 'Enter') { receber(e.target.value); e.target.value = ''; } });
   $('#scan').focus(); atualizarProg();
 }
+
 function atualizarProg() {
   const p = $('#prog'); if (!p || view !== 'home') return;
   if (!pend) { p.textContent = 'Aguardando QR...'; return; }
   const faltam = [...Array(pend.total).keys()].map(i => i + 1).filter(i => !pend.lotes.has(i));
-  p.innerHTML = `Loja <b>${pend.loja}</b>: ${pend.lotes.size} de ${pend.total} QR lidos` + (faltam.length ? ' — faltam: ' + faltam.join(', ') : '');
+  p.innerHTML = `<b>${esc(tituloGrupo(pend.lojas))}</b>: ${pend.lotes.size} de ${pend.total} QR lidos` + (faltam.length ? ' — faltam: ' + faltam.join(', ') : '');
 }
+
 function receber(txt) {
   if ($('#modal').classList.contains('open')) return;
   const bruto = txt.trim();
   if (!bruto) return;
-  // Tolerante ao layout do teclado: qualquer símbolo vira separador, maiúscula/minúscula tanto faz
+
   const tk = bruto.split(/[^0-9A-Za-z]+/).filter(Boolean);
-  if (tk.length < 5 || tk[0].toUpperCase() !== 'LV1' || !/^\d+$/.test(tk[1]) || !/^\d+$/.test(tk[2])) {
-    console.log('QR recebido (não reconhecido):', JSON.stringify(bruto));
+  if (tk.length < 5 || !/^\d+$/.test(tk[1]) || !/^\d+$/.test(tk[2])) {
     toast('QR não reconhecido. Recebido: ' + bruto.slice(0, 45));
     return;
   }
-  const n = +tk[1], t = +tk[2], l = tk[3], lista = tk.slice(4);
-  if (pend && pend.loja !== l) { toast(`Nova loja (${l}): leitura anterior descartada`); pend = null; }
-  if (!pend) pend = { loja: l, total: t, lotes: new Map() };
-  pend.total = t; pend.lotes.set(n, lista);
+
+  const ver = tk[0].toUpperCase();
+  const n = +tk[1];
+  const t = +tk[2];
+  let lojas = [];
+  let lista = [];
+
+  if (ver === 'LV1') {
+    lojas = [tk[3]];
+    lista = tk.slice(4);
+  } else if (ver === 'LV2') {
+    const idxL = tk.findIndex((v, i) => i >= 3 && v.toUpperCase() === 'L');
+    const idxB = tk.findIndex((v, i) => i > idxL && v.toUpperCase() === 'B');
+    if (idxL === -1 || idxB === -1 || idxB <= idxL + 1) {
+      toast('Formato LV2 inválido');
+      return;
+    }
+    lojas = tk.slice(idxL + 1, idxB);
+    lista = tk.slice(idxB + 1);
+  } else {
+    toast('Versão de QR não reconhecida: ' + ver);
+    return;
+  }
+
+  const chave = chaveGrupo(lojas);
+  if (pend && pend.chave !== chave) {
+    toast(`Nova conferência (${tituloGrupo(lojas, true)}): leitura anterior descartada`);
+    pend = null;
+  }
+  if (!pend) pend = { chave, lojas, total: t, lotes: new Map() };
+  pend.total = t;
+  pend.lotes.set(n, lista);
   atualizarProg();
   if (pend.lotes.size === pend.total) pedirOperador();
 }
-function desligarCam() {}
 
 // ---------- Operador ----------
 function pedirOperador() {
   const total = [...Array(pend.total).keys()].flatMap(i => pend.lotes.get(i + 1) || []).length;
-  $('#modalInfo').innerHTML = `Loja <b>${pend.loja}</b> · ${total} bultos · ${fmtData(dataSel)}`;
-  $('#ops').innerHTML = [...new Set(db.envios.map(e => e.operador))].map(o => `<option value="${o}">`).join('');
+  $('#modalInfo').innerHTML = `<b>${esc(tituloGrupo(pend.lojas))}</b> · ${total} bultos · ${fmtData(dataSel)}`;
+  $('#ops').innerHTML = [...new Set(db.envios.map(e => e.operador))].map(o => `<option value="${esc(o)}">`).join('');
   let ult = ''; try { ult = localStorage.getItem('receptor_op') || ''; } catch (e) {}
   $('#op').value = ult; $('#modal').classList.add('open'); $('#op').focus(); $('#op').select();
 }
@@ -286,73 +403,173 @@ function confirmarOp() {
   if (!nome) { $('#op').focus(); return; }
   try { localStorage.setItem('receptor_op', nome); } catch (e) {}
   const bultos = [...new Set([...Array(pend.total).keys()].flatMap(i => pend.lotes.get(i + 1) || []).map(s => s.trim()))];
-  db.envios.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), loja: pend.loja, data: dataSel, operador: nome, hora: new Date().toISOString(), bultos });
-  const l = pend.loja; pend = null; bloqueio = Date.now() + 5000;
-  $('#modal').classList.remove('open'); salvar(); irLoja(l); toast('Registro salvo');
+  db.envios.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    loja: pend.chave,
+    lojas: pend.lojas,
+    data: dataSel,
+    operador: nome,
+    hora: new Date().toISOString(),
+    bultos
+  });
+  const ch = pend.chave;
+  pend = null;
+  $('#modal').classList.remove('open');
+  salvar();
+  irGrupo(ch);
+  toast('Registro salvo');
 }
 
-// ---------- Tela: Loja ----------
+// ---------- Tela: Conferência / Loja ----------
 function renderLoja() {
-  const d = dadosLoja(lojaSel, dataSel);
-  const n = Math.max(d.certos.length, d.errados.length);
+  const d = dadosGrupo(grupoSel, dataSel);
+  const multi = d.lojas.length > 1;
+  const titulo = tituloGrupo(d.lojas);
+
+  let thead = '';
   let linhas = '';
-  for (let i = 0; i < n; i++) linhas += `<tr><td class="c">${d.certos[i] || ''}</td><td class="e">${d.errados[i] || ''}</td><td>${d.errados[i] ? extrairLoja(d.errados[i]) : ''}</td></tr>`;
+
+  if (!multi) {
+    const n = Math.max(d.certos.length, d.errados.length);
+    thead = `<tr><th>Certos (${esc(d.lojas[0])})</th><th>Errados</th><th>Loja do errado</th></tr>`;
+    for (let i = 0; i < n; i++) {
+      linhas += `<tr><td class="c">${esc(d.certos[i] || '')}</td><td class="e">${esc(d.errados[i] || '')}</td><td>${d.errados[i] ? esc(extrairLoja(d.errados[i])) : ''}</td></tr>`;
+    }
+    if (!n) linhas = '<tr><td colspan="3">Sem bultos.</td></tr>';
+  } else {
+    const maxLinhas = Math.max(
+      d.errados.length,
+      ...d.lojas.map(l => (d.certosPorLoja[l] || []).length)
+    );
+    thead = `<tr>${d.lojas.map(l => `<th>Loja ${esc(l)} (${(d.certosPorLoja[l] || []).length})</th>`).join('')}<th>Errados (${d.errados.length})</th><th>Loja do errado</th></tr>`;
+    for (let i = 0; i < maxLinhas; i++) {
+      const tdsCertos = d.lojas.map(l => `<td class="c">${esc((d.certosPorLoja[l] || [])[i] || '')}</td>`).join('');
+      const err = d.errados[i] || '';
+      linhas += `<tr>${tdsCertos}<td class="e">${esc(err)}</td><td>${err ? esc(extrairLoja(err)) : ''}</td></tr>`;
+    }
+    if (!maxLinhas) linhas = `<tr><td colspan="${d.lojas.length + 2}">Sem bultos.</td></tr>`;
+  }
+
+  const pillsHtml = multi
+    ? `<div class="storepills">${d.lojas.map(l => `<span class="pill">Loja ${esc(l)}: ${(d.certosPorLoja[l] || []).length}</span>`).join('')}</div>`
+    : '';
+
+  const subLojasHtml = (multi && identificarRegiao(d.lojas))
+    ? `<div class="substores">Lojas: ${esc(d.lojas.join(' / '))}</div>`
+    : '';
+
   $('#main').innerHTML = `<div class="card">
-    <div class="top"><h2>Loja ${lojaSel}<small>${fmtData(dataSel)}</small></h2>
+    <div class="top">
+      <div>
+        <h2>${esc(titulo)}<small>${fmtData(dataSel)}</small></h2>
+        ${subLojasHtml}
+      </div>
       <div class="copybar">
         <label><input type="checkbox" id="cab" checked> Com cabeçalho</label>
         <button class="btn" onclick="copiarLoja('tudo')">📋 Copiar tudo</button>
         <button class="btn sec" onclick="copiarLoja('certos')">Só certos</button>
         <button class="btn sec" onclick="copiarLoja('errados')">Só errados</button>
-      </div></div>
+      </div>
+    </div>
     <div class="chips">
       <div class="chip">Total<b>${d.certos.length + d.errados.length}</b></div>
       <div class="chip ok">Certos<b>${d.certos.length}</b></div>
-      <div class="chip er">Errados<b>${d.errados.length}</b></div></div>
+      <div class="chip er">Errados<b>${d.errados.length}</b></div>
+    </div>
+    ${pillsHtml}
     <h3>Registros de bipagem</h3>
     ${d.es.map(e => `<div class="env"><span>👤 <b>${esc(e.operador)}</b> · ${new Date(e.hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · ${e.bultos.length} bultos</span>
       <button class="btn red sm" onclick="excluir('${e.id}')">Excluir</button></div>`).join('')}
     <h3>Bultos</h3>
-    <div class="scroll"><table><tr><th>Certos</th><th>Errados</th><th>Loja do errado</th></tr>${linhas || '<tr><td colspan="3">Sem bultos.</td></tr>'}</table></div></div>`;
+    <div class="scroll"><table>${thead}${linhas}</table></div></div>`;
 }
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
 function excluir(id) {
   if (!confirm('Excluir este registro de bipagem?')) return;
   db.envios = db.envios.filter(e => e.id !== id); salvar();
-  if (!dadosLoja(lojaSel, dataSel).es.length) view = 'resumo';
+  if (!dadosGrupo(grupoSel, dataSel).es.length) view = 'resumo';
   render();
 }
+
 function copiarLoja(modo) {
-  const d = dadosLoja(lojaSel, dataSel); let head, rows = [];
-  if (modo === 'certos') { head = ['Bultos Certos']; rows = d.certos.map(c => [c]); }
-  else if (modo === 'errados') { head = ['Bultos Errados', 'Loja Identificada']; rows = d.errados.map(c => [c, extrairLoja(c)]); }
-  else {
-    head = ['Loja', 'Bultos Certos', 'Bultos Errados', 'Loja do Errado'];
-    const n = Math.max(d.certos.length, d.errados.length);
-    for (let i = 0; i < n; i++) rows.push([lojaSel, d.certos[i] || '', d.errados[i] || '', d.errados[i] ? extrairLoja(d.errados[i]) : '']);
+  const d = dadosGrupo(grupoSel, dataSel);
+  const multi = d.lojas.length > 1;
+  let head = [];
+  let rows = [];
+
+  if (!multi) {
+    const lojaUnica = d.lojas[0];
+    if (modo === 'certos') {
+      head = ['Bultos Certos (' + lojaUnica + ')'];
+      rows = d.certos.map(c => [c]);
+    } else if (modo === 'errados') {
+      head = ['Bultos Errados', 'Loja Identificada'];
+      rows = d.errados.map(c => [c, extrairLoja(c)]);
+    } else {
+      head = ['Loja', 'Bultos Certos', 'Bultos Errados', 'Loja do Errado'];
+      const n = Math.max(d.certos.length, d.errados.length);
+      for (let i = 0; i < n; i++) {
+        rows.push([lojaUnica, d.certos[i] || '', d.errados[i] || '', d.errados[i] ? extrairLoja(d.errados[i]) : '']);
+      }
+    }
+  } else {
+    const maxCertos = Math.max(0, ...d.lojas.map(l => (d.certosPorLoja[l] || []).length));
+    if (modo === 'certos') {
+      head = d.lojas.map(l => 'Loja ' + l);
+      for (let i = 0; i < maxCertos; i++) {
+        rows.push(d.lojas.map(l => (d.certosPorLoja[l] || [])[i] || ''));
+      }
+    } else if (modo === 'errados') {
+      head = ['Bultos Errados', 'Loja Identificada'];
+      rows = d.errados.map(c => [c, extrairLoja(c)]);
+    } else {
+      head = [...d.lojas.map(l => 'Loja ' + l), 'Bultos Errados', 'Loja do Errado'];
+      const n = Math.max(maxCertos, d.errados.length);
+      for (let i = 0; i < n; i++) {
+        const err = d.errados[i] || '';
+        rows.push([
+          ...d.lojas.map(l => (d.certosPorLoja[l] || [])[i] || ''),
+          err,
+          err ? extrairLoja(err) : ''
+        ]);
+      }
+    }
   }
+
   copiarTabela(head, rows);
 }
 
 // ---------- Tela: Resumo ----------
 function renderResumo() {
-  const ls = lojasDoDia();
-  const rows = ls.map(l => {
-    const d = dadosLoja(l, dataSel);
-    return [fmtData(dataSel), l, d.certos.length, d.errados.length, [...new Set(d.es.map(e => e.operador))].join('; ')];
+  const gs = gruposDoDia();
+  const rows = gs.map(g => {
+    const d = dadosGrupo(g.chave, dataSel);
+    return {
+      chave: g.chave,
+      data: fmtData(dataSel),
+      titulo: tituloGrupo(g.lojas),
+      lojasTexto: g.lojas.join('/'),
+      certos: d.certos.length,
+      errados: d.errados.length,
+      operadores: [...new Set(d.es.map(e => e.operador))].join('; ')
+    };
   });
-  window._resumo = rows;
-  const tc = rows.reduce((a, r) => a + r[2], 0), te = rows.reduce((a, r) => a + r[3], 0);
+  window._resumo = rows.map(r => [r.data, r.titulo, r.lojasTexto, r.certos, r.errados, r.operadores]);
+  const tc = rows.reduce((a, r) => a + r.certos, 0);
+  const te = rows.reduce((a, r) => a + r.errados, 0);
+
   $('#main').innerHTML = `<div class="card">
     <div class="top"><h2>Resumo do dia<small>${fmtData(dataSel)}</small></h2>
       <div class="copybar"><label><input type="checkbox" id="cab" checked> Com cabeçalho</label>
       <button class="btn" onclick="copiarResumo()">📋 Copiar resumo</button></div></div>
-    <div class="chips"><div class="chip">Lojas<b>${ls.length}</b></div><div class="chip ok">Certos<b>${tc}</b></div><div class="chip er">Errados<b>${te}</b></div></div>
-    <div class="scroll"><table><tr><th>Data</th><th>Loja</th><th>Certos</th><th>Errados</th><th>Operador(es)</th></tr>
-    ${rows.map(r => `<tr style="cursor:pointer" onclick="irLoja('${r[1]}')"><td>${r[0]}</td><td>${r[1]}</td><td class="c">${r[2]}</td><td class="${r[3] ? 'e' : ''}">${r[3]}</td><td>${esc(r[4])}</td></tr>`).join('') || '<tr><td colspan="5">Nenhum registro nesta data.</td></tr>'}
+    <div class="chips"><div class="chip">Conferências<b>${gs.length}</b></div><div class="chip ok">Certos<b>${tc}</b></div><div class="chip er">Errados<b>${te}</b></div></div>
+    <div class="scroll"><table><tr><th>Data</th><th>Região / Grupo</th><th>Lojas</th><th>Certos</th><th>Errados</th><th>Operador(es)</th></tr>
+    ${rows.map(r => `<tr style="cursor:pointer" onclick="irGrupo('${esc(r.chave)}')"><td>${r.data}</td><td><b>${esc(r.titulo)}</b></td><td>${esc(r.lojasTexto)}</td><td class="c">${r.certos}</td><td class="${r.errados ? 'e' : ''}">${r.errados}</td><td>${esc(r.operadores)}</td></tr>`).join('') || '<tr><td colspan="6">Nenhum registro nesta data.</td></tr>'}
     </table></div></div>`;
 }
-function copiarResumo() { copiarTabela(['Data', 'Loja', 'Certos', 'Errados', 'Operador(es)'], window._resumo || []); }
+function copiarResumo() { copiarTabela(['Data', 'Região / Grupo', 'Lojas', 'Certos', 'Errados', 'Operador(es)'], window._resumo || []); }
 
 // ---------- Copiar para o Excel (HTML com formato texto, preserva os 20 dígitos) ----------
 function copiarTabela(head, rows) {
@@ -371,7 +588,7 @@ function copiarTabela(head, rows) {
 
 // ---------- Início ----------
 document.addEventListener('click', e => {
-  if (view === 'home' && !$('#modal').classList.contains('open') && !e.target.closest('button,input,summary,details,.datebox') && $('#scan')) $('#scan').focus();
+  if (view === 'home' && !$('#modal').classList.contains('open') && !e.target.closest('button,input,select,summary,details,.datebox') && $('#scan')) $('#scan').focus();
 });
 if (!window.showSaveFilePicker) $('#fsBtns').style.display = 'none';
 carregar(); status('Salvo no navegador (vincule um arquivo JSON para ter backup)', true);
