@@ -65,13 +65,41 @@ th{position:sticky;top:0;text-align:left;padding:9px 12px;background:#f3f5fa;fon
 td{padding:7px 12px;border-top:1px solid var(--line);font-family:Consolas,monospace}
 td.c{color:var(--ok)}td.e{color:var(--er)}
 h3{margin:18px 0 8px;font-size:15px}
-#modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:50}
-#modal.open{display:flex}
-#modal .box{background:#fff;border-radius:14px;padding:24px;width:min(420px,92vw)}
-#modal input{width:100%;font-size:18px;padding:12px;border:2px solid #c9d6f5;border-radius:10px;margin:12px 0;outline:none}
-#modal input:focus{border-color:var(--pri)}
+#modal,#modalBase{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:50}
+#modal.open,#modalBase.open{display:flex}
+#modal .box,#modalBase .box{background:#fff;border-radius:14px;padding:24px;width:min(420px,92vw)}
+#modal input,#modalBase input{width:100%;font-size:18px;padding:12px;border:2px solid #c9d6f5;border-radius:10px;margin:12px 0;outline:none}
+#modal input:focus,#modalBase input:focus{border-color:var(--pri)}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#14213d;color:#fff;padding:11px 20px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
 #toast.show{opacity:1}
+td.a{color:#b45309}
+th.ok{background:var(--okbg);color:var(--ok)}th.er{background:var(--erbg);color:var(--er)}th.am{background:#fff4e0;color:#b45309}
+.chip.am{background:#fff4e0}.chip.am b{color:#b45309}
+textarea{width:100%;min-height:150px;font:14px Consolas,monospace;padding:12px;border:2px solid #c9d6f5;border-radius:12px;margin:14px 0 10px;outline:none;resize:vertical}
+textarea:focus{border-color:var(--pri);box-shadow:0 0 0 4px #2457d622}
+.pbar{height:12px;background:#fdeaea;border-radius:99px;overflow:hidden;margin:4px 0 16px}
+.pbar i{display:block;height:100%;background:#16a34a}
+#printArea{display:none}
+.pr{font-family:system-ui,"Segoe UI",Arial,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr h1{font-size:18pt;margin:0 0 2pt}.pr h2{font-size:13pt;margin:14pt 0 6pt}
+.pr .sub{color:#555;font-size:9.5pt;margin-bottom:8pt}
+.pr .kpis{display:flex;gap:8pt;margin:8pt 0}
+.pr .kpi{border:1px solid #ccc;border-radius:6pt;padding:5pt 10pt;font-size:9pt;color:#555}
+.pr .kpi b{display:block;font-size:16pt;color:#111}
+.pr .kpi.ok b{color:#15803d}.pr .kpi.er b{color:#c81e1e}.pr .kpi.am b{color:#b45309}
+.pr table{width:100%;border-collapse:collapse;font-size:8.5pt}
+.pr th{background:#eee;text-align:left;padding:4pt 6pt;border:1px solid #ccc}
+.pr th.ok{background:#e6f6ec}.pr th.er{background:#fdeaea}.pr th.am{background:#fff4e0}
+.pr td{padding:2.5pt 6pt;border:1px solid #ddd;font-family:Consolas,monospace;vertical-align:top}
+.pr td.c{color:#15803d}.pr td.e{color:#c81e1e}.pr td.a{color:#b45309}
+.pr thead{display:table-header-group}.pr tr{page-break-inside:avoid}
+.pr .sec{page-break-before:always}
+@media print{
+  body{height:auto;display:block;background:#fff}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block}
+  @page{margin:12mm}
+}
 @media(max-width:760px){.layout{flex-direction:column}aside{width:100%;max-height:200px;border-right:0;border-bottom:1px solid var(--line)}}
 </style>
 </head>
@@ -118,12 +146,25 @@ h3{margin:18px 0 8px;font-size:15px}
     </div>
   </div>
 </div>
+<div id="modalBase">
+  <div class="box">
+    <h2 style="margin:0 0 4px">De qual loja é essa base?</h2>
+    <div class="mut" id="baseInfo"></div>
+    <input id="baseLoja" list="lojasDia" placeholder="Número da loja (ex: 7022)" autocomplete="off" inputmode="numeric">
+    <datalist id="lojasDia"></datalist>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn sec" onclick="cancelarBase()">Cancelar</button>
+      <button class="btn" onclick="confirmarBase()">Comparar</button>
+    </div>
+  </div>
+</div>
+<div id="printArea" class="pr"></div>
 <div id="toast"></div>
 
 <script>
 const $ = s => document.querySelector(s);
 const KEY = 'receptor_db_v1';
-let db = { envios: [] }, fh = null;
+let db = { envios: [], bases: [] }, fh = null;
 let view = 'home', lojaSel = null, dataSel = hoje();
 let pend = null;
 
@@ -146,6 +187,7 @@ function status(t, ok) { const s = $('#stat'); s.textContent = '💾 ' + t; s.cl
 // ---------- Persistência ----------
 function carregar() {
   try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && Array.isArray(o.envios)) db = o; } catch (e) {}
+  if (!Array.isArray(db.bases)) db.bases = [];
 }
 async function salvar() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
@@ -160,6 +202,8 @@ async function salvar() {
 function mesclar(o) {
   const ids = new Set(db.envios.map(e => e.id)); let n = 0;
   (o.envios || []).forEach(e => { if (e && e.id && (e.loja || (Array.isArray(e.lojas) && e.lojas.length)) && e.data && Array.isArray(e.bultos) && !ids.has(e.id)) { db.envios.push(e); n++; } });
+  const bids = new Set((db.bases = db.bases || []).map(b => b.id));
+  (o.bases || []).forEach(b => { if (b && b.id && b.loja && b.data && Array.isArray(b.bultos) && !bids.has(b.id)) { db.bases.push(b); n++; } });
   return n;
 }
 const FT = [{ description: 'JSON', accept: { 'application/json': ['.json'] } }];
@@ -229,6 +273,7 @@ function gruposDoDia() {
 function setData(v) {
   dataSel = v || hoje(); $('#dt').value = dataSel;
   if (view === 'loja' && !dadosGrupo(lojaSel, dataSel).es.length) view = 'resumo';
+  if (view === 'cmp' && !comparar(cmpLoja, dataSel)) view = 'base';
   render();
 }
 function mudaDia(n) {
@@ -245,13 +290,14 @@ function render() {
   $('#dt').value = dataSel;
   $('#wd').textContent = new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long' });
   renderSide();
-  if (view === 'home') renderHome(); else if (view === 'resumo') renderResumo(); else renderLoja();
+  if (view === 'home') renderHome(); else if (view === 'resumo') renderResumo(); else if (view === 'base') renderBase(); else if (view === 'cmp') renderCmp(); else renderLoja();
 }
 function renderSide() {
   const gs = gruposDoDia();
   $('#side').innerHTML =
     `<button class="nav ${view === 'home' ? 'on' : ''}" onclick="irHome()">📷 Bipar QR codes</button>
      <button class="nav ${view === 'resumo' ? 'on' : ''}" onclick="irResumo()">📋 Resumo do dia</button>
+     <button class="nav ${view === 'base' || view === 'cmp' ? 'on' : ''}" onclick="irBase()">🔎 Comparar com a base</button>
      <h4>Conferências · ${fmtData(dataSel)} (${gs.length})</h4>` +
     (gs.length ? gs.map(k => {
       const d = dadosGrupo(k, dataSel);
@@ -395,6 +441,202 @@ function renderResumo() {
     </table></div></div>`;
 }
 function copiarResumo() { copiarTabela(['Data', 'Conferência', 'Lojas', 'Certos', 'Errados', 'Operador(es)'], window._resumo || []); }
+
+// ---------- Comparação com a base ----------
+let cmpLoja = null, baseTmp = null;
+const T = v => `="${String(v).replace(/"/g, '""')}"`;
+function irBase() { view = 'base'; render(); }
+function irCmp(l) { view = 'cmp'; cmpLoja = l; render(); }
+function lojasDoDiaTodas() { return ord([...new Set(db.envios.filter(e => e.data === dataSel).flatMap(lojasDe))]); }
+
+function parseBase(txt) {
+  const out = []; let ign = 0;
+  txt.split(/\r?\n/).forEach(l => {
+    l = l.trim(); if (!l) return;
+    const m = l.match(/\d{20}/);
+    if (m) out.push(m[0]);
+    else { const c = l.replace(/[^0-9A-Za-z]/g, ''); if (/^\d{8,}$/.test(c)) out.push(c); else ign++; }
+  });
+  const u = [...new Set(out)];
+  return { bultos: u, ign, dup: out.length - u.length };
+}
+// Presentes = na base e bipados | Faltantes = na base e não bipados | Sobras = bipados como desta loja e fora da base
+function comparar(l, data) {
+  const b = db.bases.find(x => x.loja === l && x.data === data);
+  if (!b) return null;
+  const es = db.envios.filter(e => e.data === data && lojasDe(e).includes(l));
+  const pool = [...new Set(es.flatMap(e => e.bultos))];
+  const ps = new Set(pool), bs = new Set(b.bultos);
+  const presentes = b.bultos.filter(c => ps.has(c));
+  const faltantes = b.bultos.filter(c => !ps.has(c));
+  const sobras = pool.filter(c => extrairLoja(c) === l && !bs.has(c));
+  const pct = b.bultos.length ? Math.round(presentes.length / b.bultos.length * 1000) / 10 : 0;
+  return { base: b, es, presentes, faltantes, sobras, pct };
+}
+function baseLojas() {
+  return ord([...new Set([...lojasDoDiaTodas(), ...db.bases.filter(b => b.data === dataSel).map(b => b.loja)])]);
+}
+
+function contaBase() {
+  const r = parseBase($('#baseTxt').value);
+  $('#baseCnt').textContent = r.bultos.length ? r.bultos.length + ' bultos reconhecidos' + (r.ign ? `, ${r.ign} linhas ignoradas` : '') : '';
+}
+function salvarBase() {
+  const r = parseBase($('#baseTxt').value);
+  if (!r.bultos.length) { toast('Cole os bultos da base primeiro'); return; }
+  baseTmp = r;
+  const dia = lojasDoDiaTodas();
+  const sem = dia.filter(l => !db.bases.some(b => b.loja === l && b.data === dataSel));
+  $('#baseInfo').innerHTML = `<b>${r.bultos.length}</b> bultos` + (r.ign ? ` · ${r.ign} linhas ignoradas` : '') + (r.dup ? ` · ${r.dup} repetidos removidos` : '');
+  $('#lojasDia').innerHTML = dia.map(l => `<option value="${l}">`).join('');
+  $('#baseLoja').value = sem[0] || '';
+  $('#modalBase').classList.add('open'); $('#baseLoja').focus(); $('#baseLoja').select();
+}
+function cancelarBase() { $('#modalBase').classList.remove('open'); }
+function confirmarBase() {
+  const n = parseInt($('#baseLoja').value.replace(/\D/g, ''), 10);
+  if (isNaN(n)) { $('#baseLoja').focus(); return; }
+  const l = String(n);
+  const reg = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), loja: l, data: dataSel, hora: new Date().toISOString(), bultos: baseTmp.bultos };
+  const i = db.bases.findIndex(b => b.loja === l && b.data === dataSel);
+  if (i >= 0) { db.bases[i] = reg; toast(`Base da loja ${l} substituída`); } else { db.bases.push(reg); toast('Base salva'); }
+  $('#modalBase').classList.remove('open'); salvar(); irCmp(l);
+}
+$('#baseLoja').addEventListener('keydown', e => { if (e.key === 'Enter') confirmarBase(); });
+function excluirBase(l) {
+  if (!confirm(`Excluir a base da loja ${l} desta data?`)) return;
+  db.bases = db.bases.filter(b => !(b.loja === l && b.data === dataSel)); salvar();
+  if (view === 'cmp') view = 'base';
+  render();
+}
+
+function renderBase() {
+  const ls = baseLojas();
+  const rows = ls.map(l => [l, comparar(l, dataSel)]);
+  const linhas = rows.map(([l, c]) => c
+    ? `<tr><td>Loja ${l}</td><td>${c.base.bultos.length}</td><td class="c">${c.presentes.length}</td><td class="${c.faltantes.length ? 'e' : ''}">${c.faltantes.length}</td><td class="${c.sobras.length ? 'a' : ''}">${c.sobras.length}</td><td>${c.pct}%</td>
+       <td style="white-space:nowrap"><button class="btn sec sm" onclick="irCmp('${l}')">Ver</button> <button class="btn red sm" onclick="excluirBase('${l}')">Excluir</button></td></tr>`
+    : `<tr><td>Loja ${l}</td><td colspan="5" style="color:#9aa3b2;font-family:inherit">sem base colada</td><td></td></tr>`).join('');
+  $('#main').innerHTML = `<div class="card">
+    <h2>Comparar com a base</h2>
+    <p class="mut">Cole a lista de bultos esperados (um por linha). Depois você escolhe a loja. Data: <b>${fmtData(dataSel)}</b></p>
+    <textarea id="baseTxt" placeholder="Cole aqui os bultos da base, um por linha..." oninput="contaBase()"></textarea>
+    <div class="row"><button class="btn" onclick="salvarBase()">Salvar base e comparar</button><span id="baseCnt" class="mut"></span></div></div>
+    <div class="card">
+    <div class="top"><h2>Resultado do dia<small>${fmtData(dataSel)}</small></h2>
+      <div class="copybar"><label><input type="checkbox" id="cab" checked> Com cabeçalho</label>
+        <button class="btn sec" onclick="copiarResumoBase()">📋 Copiar</button>
+        <button class="btn sec" onclick="csvDia()">⬇ Planilha</button>
+        <button class="btn" onclick="pdfDia()">🖨 PDF</button></div></div>
+    <div class="scroll" style="margin-top:12px"><table><tr><th>Loja</th><th>Base</th><th>Presentes</th><th>Faltantes</th><th>Sobras</th><th>% ok</th><th></th></tr>
+    ${linhas || '<tr><td colspan="7">Nenhuma loja nesta data ainda.</td></tr>'}</table></div></div>`;
+}
+
+function renderCmp() {
+  const c = comparar(cmpLoja, dataSel);
+  if (!c) { view = 'base'; renderBase(); return; }
+  const n = Math.max(c.presentes.length, c.faltantes.length, c.sobras.length);
+  let linhas = '';
+  for (let i = 0; i < n; i++) linhas += `<tr><td class="c">${c.presentes[i] || ''}</td><td class="e">${c.faltantes[i] || ''}</td><td class="a">${c.sobras[i] || ''}</td></tr>`;
+  const confs = c.es.map(e => `${esc(titulo(lojasDe(e)))} (${esc(e.operador)})`).join(' · ') || 'nenhuma conferência bipada para esta loja';
+  $('#main').innerHTML = `<div class="card">
+    <div class="top"><h2>Loja ${cmpLoja}<small>comparação com a base · ${fmtData(dataSel)}</small></h2>
+      <div class="copybar"><label><input type="checkbox" id="cab" checked> Com cabeçalho</label>
+        <button class="btn sec" onclick="copiarCmp('tudo')">📋 Copiar</button>
+        <button class="btn sec" onclick="csvLoja('${cmpLoja}')">⬇ Planilha</button>
+        <button class="btn" onclick="pdfLoja('${cmpLoja}')">🖨 PDF</button></div></div>
+    <div class="chips">
+      <div class="chip">Na base<b>${c.base.bultos.length}</b></div>
+      <div class="chip ok">Presentes<b>${c.presentes.length}</b></div>
+      <div class="chip er">Faltantes<b>${c.faltantes.length}</b></div>
+      <div class="chip am">Sobras<b>${c.sobras.length}</b></div>
+      <div class="chip">% ok<b>${c.pct}%</b></div></div>
+    <div class="pbar"><i style="width:${c.pct}%"></i></div>
+    <p class="mut">Conferências usadas: ${confs}</p>
+    <div class="copybar" style="margin-bottom:8px"><span class="mut">Copiar só:</span>
+      <button class="btn sec sm" onclick="copiarCmp('faltantes')">Faltantes</button>
+      <button class="btn sec sm" onclick="copiarCmp('sobras')">Sobras</button>
+      <button class="btn sec sm" onclick="copiarCmp('presentes')">Presentes</button></div>
+    <div class="scroll" style="max-height:520px"><table><tr><th class="ok">Presentes (${c.presentes.length})</th><th class="er">Faltantes (${c.faltantes.length})</th><th class="am">Sobras (${c.sobras.length})</th></tr>${linhas || '<tr><td colspan="3">Sem dados.</td></tr>'}</table></div></div>`;
+}
+
+function copiarCmp(modo) {
+  const c = comparar(cmpLoja, dataSel); if (!c) return;
+  const nome = { presentes: 'Presentes', faltantes: 'Faltantes', sobras: 'Sobras' };
+  if (nome[modo]) { copiarTabela([nome[modo]], c[modo].map(x => [x])); return; }
+  const n = Math.max(c.presentes.length, c.faltantes.length, c.sobras.length), rows = [];
+  for (let i = 0; i < n; i++) rows.push([c.presentes[i] || '', c.faltantes[i] || '', c.sobras[i] || '']);
+  copiarTabela(['Presentes', 'Faltantes', 'Sobras'], rows);
+}
+function resumoBaseRows() {
+  return baseLojas().map(l => [l, comparar(l, dataSel)]).filter(([, c]) => c)
+    .map(([l, c]) => [fmtData(dataSel), l, c.base.bultos.length, c.presentes.length, c.faltantes.length, c.sobras.length, c.pct + '%']);
+}
+function copiarResumoBase() { copiarTabela(['Data', 'Loja', 'Base', 'Presentes', 'Faltantes', 'Sobras', '% ok'], resumoBaseRows()); }
+
+// ---------- Exportar planilha (CSV aberto direto no Excel) ----------
+function baixar(nome, linhas) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + linhas.map(r => r.join(';')).join('\n')], { type: 'text/csv;charset=utf-8;' }));
+  a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function csvLoja(l) {
+  const c = comparar(l, dataSel); if (!c) return;
+  const r = [['Loja', l], ['Data', fmtData(dataSel)], ['Total na base', c.base.bultos.length], ['% ok', c.pct + '%'], [],
+    [`Presentes (${c.presentes.length})`, `Faltantes (${c.faltantes.length})`, `Sobras (${c.sobras.length})`]];
+  const n = Math.max(c.presentes.length, c.faltantes.length, c.sobras.length);
+  for (let i = 0; i < n; i++) r.push([c.presentes[i] ? T(c.presentes[i]) : '', c.faltantes[i] ? T(c.faltantes[i]) : '', c.sobras[i] ? T(c.sobras[i]) : '']);
+  baixar(`Comparacao_Loja_${l}_${dataSel}.csv`, r);
+}
+function csvDia() {
+  const ls = baseLojas().filter(l => comparar(l, dataSel));
+  if (!ls.length) { toast('Nenhuma base para exportar'); return; }
+  const r = [['Data', 'Loja', 'Status', 'Bulto']];
+  ls.forEach(l => {
+    const c = comparar(l, dataSel);
+    c.presentes.forEach(x => r.push([fmtData(dataSel), l, 'Presente', T(x)]));
+    c.faltantes.forEach(x => r.push([fmtData(dataSel), l, 'Faltante', T(x)]));
+    c.sobras.forEach(x => r.push([fmtData(dataSel), l, 'Sobra', T(x)]));
+  });
+  baixar(`Comparacao_Dia_${dataSel}.csv`, r);
+}
+
+// ---------- Exportar PDF (impressão do navegador -> "Salvar como PDF") ----------
+function imprimir(html, nome) {
+  const pa = $('#printArea'); pa.innerHTML = html;
+  const t = document.title; document.title = nome;
+  const fim = () => { pa.innerHTML = ''; document.title = t; window.removeEventListener('afterprint', fim); };
+  window.addEventListener('afterprint', fim);
+  toast('Na janela de impressão, escolha "Salvar como PDF"');
+  setTimeout(() => window.print(), 400);
+}
+function secaoLoja(l, c, i) {
+  const n = Math.max(c.presentes.length, c.faltantes.length, c.sobras.length);
+  let linhas = '';
+  for (let k = 0; k < n; k++) linhas += `<tr><td class="c">${c.presentes[k] || ''}</td><td class="e">${c.faltantes[k] || ''}</td><td class="a">${c.sobras[k] || ''}</td></tr>`;
+  const confs = c.es.map(e => `${esc(titulo(lojasDe(e)))} (${esc(e.operador)})`).join(' · ') || 'nenhuma';
+  return `<div class="${i ? 'sec' : ''}"><h1>Loja ${l} — Comparação com a base</h1>
+    <div class="sub">Data: ${fmtData(dataSel)} · Conferências: ${confs}</div>
+    <div class="kpis"><div class="kpi">Na base<b>${c.base.bultos.length}</b></div><div class="kpi ok">Presentes<b>${c.presentes.length}</b></div>
+      <div class="kpi er">Faltantes<b>${c.faltantes.length}</b></div><div class="kpi am">Sobras<b>${c.sobras.length}</b></div><div class="kpi">% ok<b>${c.pct}%</b></div></div>
+    <div class="pbar"><i style="width:${c.pct}%"></i></div>
+    <table><thead><tr><th class="ok">Presentes (${c.presentes.length})</th><th class="er">Faltantes (${c.faltantes.length})</th><th class="am">Sobras (${c.sobras.length})</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+}
+function pdfLoja(l) {
+  const c = comparar(l, dataSel); if (!c) return;
+  imprimir(secaoLoja(l, c, 0), `Comparacao_Loja_${l}_${dataSel}`);
+}
+function pdfDia() {
+  const ls = baseLojas().filter(l => comparar(l, dataSel));
+  if (!ls.length) { toast('Nenhuma base para exportar'); return; }
+  const resumo = resumoBaseRows().map(r => `<tr><td>Loja ${r[1]}</td><td>${r[2]}</td><td class="c">${r[3]}</td><td class="e">${r[4]}</td><td class="a">${r[5]}</td><td>${r[6]}</td></tr>`).join('');
+  const tot = ls.map(l => comparar(l, dataSel)).reduce((a, c) => [a[0] + c.base.bultos.length, a[1] + c.presentes.length, a[2] + c.faltantes.length, a[3] + c.sobras.length], [0, 0, 0, 0]);
+  const html = `<div><h1>Conferência — Resumo do dia</h1><div class="sub">Data: ${fmtData(dataSel)} · ${ls.length} lojas</div>
+    <div class="kpis"><div class="kpi">Na base<b>${tot[0]}</b></div><div class="kpi ok">Presentes<b>${tot[1]}</b></div><div class="kpi er">Faltantes<b>${tot[2]}</b></div><div class="kpi am">Sobras<b>${tot[3]}</b></div></div>
+    <table><thead><tr><th>Loja</th><th>Base</th><th class="ok">Presentes</th><th class="er">Faltantes</th><th class="am">Sobras</th><th>% ok</th></tr></thead><tbody>${resumo}</tbody></table></div>` +
+    ls.map((l, i) => secaoLoja(l, comparar(l, dataSel), 1)).join('');
+  imprimir(html, `Comparacao_Dia_${dataSel}`);
+}
 
 // ---------- Copiar para o Excel (HTML com formato texto, preserva os 20 dígitos) ----------
 function copiarTabela(head, rows) {
